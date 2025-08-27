@@ -19,7 +19,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Get user's projects
         user_projects = Project.objects.filter(
-            Q(created_by=self.request.user) | Q(team_members=self.request.user)
+            owner=self.request.user
         ).distinct()
         
         # Dashboard statistics
@@ -27,19 +27,19 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'total_projects': user_projects.count(),
             'active_projects': user_projects.filter(status='active').count(),
             'total_applications': Application.objects.filter(project__in=user_projects).count(),
-            'total_tasks': Task.objects.filter(project__in=user_projects).count(),
+            'total_tasks': Task.objects.filter(application__project__in=user_projects).count(),
             'pending_tasks': Task.objects.filter(
-                project__in=user_projects,
-                status__in=['todo', 'in_progress']
+                application__project__in=user_projects,
+                status__in=['pending', 'in_progress']
             ).count(),
             'completed_tasks': Task.objects.filter(
-                project__in=user_projects,
+                application__project__in=user_projects,
                 status='completed'
             ).count(),
             
             # Recent items
             'recent_projects': user_projects[:5],
-            'recent_tasks': Task.objects.filter(project__in=user_projects)[:10],
+            'recent_tasks': Task.objects.filter(application__project__in=user_projects)[:10],
             'recent_artifacts': Artifact.objects.filter(application__project__in=user_projects)[:5],
         })
         
@@ -145,6 +145,11 @@ class TaskListView(LoginRequiredMixin, ListView):
     context_object_name = 'tasks'
     paginate_by = 20
 
+    def get_queryset(self):
+        return Task.objects.filter(
+            application__project__owner=self.request.user
+        ).order_by('-created_at')
+
 
 class TaskDetailView(LoginRequiredMixin, DetailView):
     model = Task
@@ -155,10 +160,10 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
     template_name = 'tracker/task_form.html'
-    fields = ['title', 'description', 'project', 'application', 'status', 'priority', 'assignee_type', 'assigned_to', 'estimated_hours', 'due_date']
+    fields = ['title', 'description', 'application', 'assignee', 'status', 'priority', 'estimated_hours', 'due_date']
+    success_url = reverse_lazy('tracker:task_list')
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
         messages.success(self.request, f'Task "{form.instance.title}" created successfully.')
         return super().form_valid(form)
 
@@ -166,7 +171,8 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
     template_name = 'tracker/task_form.html'
-    fields = ['title', 'description', 'project', 'application', 'status', 'priority', 'assignee_type', 'assigned_to', 'estimated_hours', 'actual_hours', 'due_date', 'completed_at']
+    fields = ['title', 'description', 'application', 'assignee', 'status', 'priority', 'estimated_hours', 'due_date']
+    success_url = reverse_lazy('tracker:task_list')
 
     def form_valid(self, form):
         messages.success(self.request, f'Task "{form.instance.title}" updated successfully.')
@@ -225,10 +231,10 @@ class ArtifactDownloadView(LoginRequiredMixin, DetailView):
 
     def get(self, request, *args, **kwargs):
         artifact = self.get_object()
-        if artifact.file:
-            response = HttpResponse(artifact.file.read())
+        if artifact.file_upload:
+            response = HttpResponse(artifact.file_upload.read())
             response['Content-Type'] = 'application/octet-stream'
-            response['Content-Disposition'] = f'attachment; filename="{artifact.file.name}"'
+            response['Content-Disposition'] = f'attachment; filename="{artifact.file_upload.name}"'
             return response
         else:
             messages.error(request, 'No file available for download.')

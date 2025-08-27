@@ -2,9 +2,15 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.validators import FileExtensionValidator
+from django.utils import timezone
 import os
 
 User = get_user_model()
+
+
+def artifact_upload_path(instance, filename):
+    """Generate upload path for artifacts."""
+    return f'artifacts/{instance.application.project.name}/{instance.application.name}/{filename}'
 
 
 class Project(models.Model):
@@ -13,21 +19,18 @@ class Project(models.Model):
     """
     STATUS_CHOICES = [
         ('planning', 'Planning'),
-        ('active', 'Active'),
+        ('development', 'Development'),
+        ('testing', 'Testing'),
         ('completed', 'Completed'),
-        ('on_hold', 'On Hold'),
-        ('cancelled', 'Cancelled'),
+        ('on-hold', 'On Hold'),
     ]
 
-    name = models.CharField(max_length=200, unique=True)
-    description = models.TextField(blank=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planning')
-    start_date = models.DateField(null=True, blank=True)
-    end_date = models.DateField(null=True, blank=True)
-    repository_url = models.URLField(blank=True)
-    documentation_url = models.URLField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_projects')
-    team_members = models.ManyToManyField(User, related_name='projects', blank=True)
+    start_date = models.DateField()
+    target_date = models.DateField()
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_projects')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -44,12 +47,42 @@ class Project(models.Model):
 
     @property
     def completion_percentage(self):
-        """Calculate project completion based on tasks."""
-        total_tasks = self.tasks.count()
+        """Calculate project completion based on tasks across all applications."""
+        total_tasks = 0
+        completed_tasks = 0
+        
+        for app in self.applications.all():
+            app_tasks = app.tasks.all()
+            total_tasks += app_tasks.count()
+            completed_tasks += app_tasks.filter(status='completed').count()
+        
         if total_tasks == 0:
             return 0
-        completed_tasks = self.tasks.filter(status='completed').count()
         return round((completed_tasks / total_tasks) * 100, 1)
+
+    @property
+    def overdue_tasks_count(self):
+        """Count overdue tasks across all applications in the project."""
+        overdue_count = 0
+        today = timezone.now().date()
+        
+        for app in self.applications.all():
+            overdue_count += app.tasks.filter(
+                due_date__lt=today,
+                status__in=['pending', 'in-progress']
+            ).count()
+        
+        return overdue_count
+
+    @property
+    def total_applications_count(self):
+        """Total number of applications in this project."""
+        return self.applications.count()
+
+    @property
+    def completed_applications_count(self):
+        """Number of applications in production status."""
+        return self.applications.filter(status='production').count()
 
 
 class Application(models.Model):
@@ -58,33 +91,25 @@ class Application(models.Model):
     """
     STATUS_CHOICES = [
         ('planning', 'Planning'),
+        ('ready', 'Ready'),
         ('development', 'Development'),
         ('testing', 'Testing'),
         ('production', 'Production'),
-        ('maintenance', 'Maintenance'),
-        ('deprecated', 'Deprecated'),
     ]
 
-    TECHNOLOGY_CHOICES = [
-        ('django', 'Django'),
-        ('react', 'React'),
-        ('vue', 'Vue.js'),
-        ('angular', 'Angular'),
-        ('flask', 'Flask'),
-        ('fastapi', 'FastAPI'),
-        ('nodejs', 'Node.js'),
-        ('other', 'Other'),
+    COMPLEXITY_CHOICES = [
+        ('simple', 'Simple'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='applications')
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    complexity = models.CharField(max_length=20, choices=COMPLEXITY_CHOICES, default='medium')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planning')
-    technology_stack = models.CharField(max_length=20, choices=TECHNOLOGY_CHOICES, default='django')
-    version = models.CharField(max_length=20, default='1.0.0')
-    repository_url = models.URLField(blank=True)
-    demo_url = models.URLField(blank=True)
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_applications')
+    estimated_weeks = models.PositiveIntegerField()
+    features = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -100,15 +125,87 @@ class Application(models.Model):
     def get_absolute_url(self):
         return reverse('tracker:application_detail', kwargs={'pk': self.pk})
 
+    @property
+    def tasks_completion_percentage(self):
+        """Calculate application completion based on its tasks."""
+        total_tasks = self.tasks.count()
+        if total_tasks == 0:
+            return 0
+        completed_tasks = self.tasks.filter(status='completed').count()
+        return round((completed_tasks / total_tasks) * 100, 1)
+
+    @property
+    def overdue_tasks_count(self):
+        """Count overdue tasks for this application."""
+        today = timezone.now().date()
+        return self.tasks.filter(
+            due_date__lt=today,
+            status__in=['pending', 'in-progress']
+        ).count()
+
+
+class Artifact(models.Model):
+    """
+    Artifacts like requirements, code, documentation for applications
+    """
+    TYPE_CHOICES = [
+        ('requirements', 'Requirements'),
+        ('code', 'Code'),
+        ('documentation', 'Documentation'),
+        ('architecture', 'Architecture'),
+        ('design', 'Design'),
+    ]
+
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('in-progress', 'In Progress'),
+        ('review', 'Review'),
+        ('complete', 'Complete'),
+    ]
+
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='artifacts')
+    name = models.CharField(max_length=200)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    description = models.TextField(blank=True)
+    file_upload = models.FileField(
+        upload_to=artifact_upload_path,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'md', 'py', 'js', 'html', 'css'])]
+    )
+    content = models.TextField(blank=True, help_text="Text content for the artifact")
+    version = models.CharField(max_length=10, default='1.0')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_artifacts')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        unique_together = ['application', 'name', 'version']
+        verbose_name = "Artifact"
+        verbose_name_plural = "Artifacts"
+
+    def __str__(self):
+        return f"{self.application.name} - {self.name} (v{self.version})"
+
+    def get_absolute_url(self):
+        return reverse('tracker:artifact_detail', kwargs={'pk': self.pk})
+
+    @property
+    def file_size_mb(self):
+        """Get file size in MB if file exists."""
+        if self.file_upload:
+            return round(self.file_upload.size / (1024 * 1024), 2)
+        return 0
+
 
 class Task(models.Model):
     """
     Development tasks with assignment tracking
     """
     STATUS_CHOICES = [
-        ('todo', 'To Do'),
-        ('in_progress', 'In Progress'),
-        ('review', 'In Review'),
+        ('pending', 'Pending'),
+        ('in-progress', 'In Progress'),
         ('completed', 'Completed'),
         ('blocked', 'Blocked'),
     ]
@@ -117,29 +214,25 @@ class Task(models.Model):
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
-        ('urgent', 'Urgent'),
+        ('critical', 'Critical'),
     ]
 
     ASSIGNEE_CHOICES = [
-        ('human', 'Human Developer'),
-        ('claude', 'Claude AI'),
-        ('copilot', 'GitHub Copilot'),
-        ('team', 'Development Team'),
+        ('claude', 'Claude'),
+        ('github-copilot', 'GitHub Copilot'),
+        ('human', 'Human'),
+        ('team', 'Team'),
     ]
 
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
-    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='todo')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
-    assignee_type = models.CharField(max_length=20, choices=ASSIGNEE_CHOICES, default='human')
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tasks')
-    estimated_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    actual_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    assignee = models.CharField(max_length=20, choices=ASSIGNEE_CHOICES, default='human')
     due_date = models.DateField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tasks')
+    estimated_hours = models.PositiveIntegerField(null=True, blank=True)
+    actual_hours = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -157,86 +250,43 @@ class Task(models.Model):
     @property
     def is_overdue(self):
         """Check if task is overdue."""
-        from django.utils import timezone
-        return self.due_date and self.due_date < timezone.now().date() and self.status != 'completed'
-
-
-def artifact_upload_path(instance, filename):
-    """Generate upload path for artifacts."""
-    return f'artifacts/{instance.application.project.name}/{instance.application.name}/{filename}'
-
-
-class Artifact(models.Model):
-    """
-    Project artifacts with versioning (requirements, code, documentation)
-    """
-    TYPE_CHOICES = [
-        ('requirements', 'Requirements Document'),
-        ('design', 'Design Document'),
-        ('code', 'Source Code'),
-        ('documentation', 'Documentation'),
-        ('test', 'Test Files'),
-        ('deployment', 'Deployment Scripts'),
-        ('other', 'Other'),
-    ]
-
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='artifacts')
-    artifact_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='documentation')
-    version = models.CharField(max_length=20, default='1.0')
-    file = models.FileField(
-        upload_to=artifact_upload_path,
-        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'md', 'py', 'js', 'html', 'css', 'json'])],
-        null=True,
-        blank=True
-    )
-    content = models.TextField(blank=True, help_text="Text content for the artifact")
-    url = models.URLField(blank=True, help_text="External URL for the artifact")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_artifacts')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        unique_together = ['application', 'name', 'version']
-        verbose_name = "Artifact"
-        verbose_name_plural = "Artifacts"
-
-    def __str__(self):
-        return f"{self.name} v{self.version} ({self.application})"
-
-    def get_absolute_url(self):
-        return reverse('tracker:artifact_detail', kwargs={'pk': self.pk})
+        if not self.due_date:
+            return False
+        return self.due_date < timezone.now().date() and self.status in ['pending', 'in-progress']
 
     @property
-    def file_size_mb(self):
-        """Get file size in MB."""
-        if self.file:
-            return round(self.file.size / (1024 * 1024), 2)
-        return 0
+    def hours_variance(self):
+        """Calculate variance between estimated and actual hours."""
+        if self.estimated_hours and self.actual_hours:
+            return self.actual_hours - self.estimated_hours
+        return None
 
 
 class Decision(models.Model):
     """
-    Architecture and technical decision logging
+    Project decisions and architecture choices
     """
     STATUS_CHOICES = [
-        ('proposed', 'Proposed'),
-        ('accepted', 'Accepted'),
-        ('rejected', 'Rejected'),
-        ('superseded', 'Superseded'),
+        ('pending', 'Pending'),
+        ('decided', 'Decided'),
+        ('implemented', 'Implemented'),
+        ('changed', 'Changed'),
     ]
 
+    IMPACT_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='decisions')
     title = models.CharField(max_length=200)
     description = models.TextField()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='decisions')
-    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='decisions', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='proposed')
-    rationale = models.TextField(help_text="Why this decision was made")
-    consequences = models.TextField(blank=True, help_text="Expected consequences of this decision")
-    alternatives = models.TextField(blank=True, help_text="Alternative options considered")
-    decision_maker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='decisions_made')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, default='medium')
+    decided_date = models.DateField(null=True, blank=True)
+    decision_maker = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -251,48 +301,93 @@ class Decision(models.Model):
     def get_absolute_url(self):
         return reverse('tracker:decision_detail', kwargs={'pk': self.pk})
 
+    @property
+    def days_since_creation(self):
+        """Calculate days since decision was created."""
+        return (timezone.now().date() - self.created_at.date()).days
+
+    @property
+    def is_pending_too_long(self):
+        """Check if decision has been pending for more than 30 days."""
+        return self.status == 'pending' and self.days_since_creation > 30
+
 
 class Integration(models.Model):
     """
-    App-to-app integration planning and tracking
+    Integration plans between applications
     """
+    INTEGRATION_TYPE_CHOICES = [
+        ('data-sharing', 'Data Sharing'),
+        ('ui-integration', 'UI Integration'),
+        ('api-integration', 'API Integration'),
+        ('full-merge', 'Full Merge'),
+    ]
+
     STATUS_CHOICES = [
         ('planned', 'Planned'),
-        ('in_progress', 'In Progress'),
-        ('testing', 'Testing'),
+        ('in-progress', 'In Progress'),
         ('completed', 'Completed'),
-        ('failed', 'Failed'),
+        ('blocked', 'Blocked'),
     ]
 
     COMPLEXITY_CHOICES = [
-        ('low', 'Low'),
+        ('simple', 'Simple'),
         ('medium', 'Medium'),
-        ('high', 'High'),
-        ('very_high', 'Very High'),
+        ('complex', 'Complex'),
     ]
 
-    name = models.CharField(max_length=200)
-    description = models.TextField()
-    source_application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='outgoing_integrations')
-    target_application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='incoming_integrations')
+    from_app = models.ForeignKey(
+        Application, 
+        on_delete=models.CASCADE, 
+        related_name='integrations_from'
+    )
+    to_app = models.ForeignKey(
+        Application, 
+        on_delete=models.CASCADE, 
+        related_name='integrations_to'
+    )
+    integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
-    complexity = models.CharField(max_length=20, choices=COMPLEXITY_CHOICES, default='medium')
-    estimated_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    actual_hours = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    dependencies = models.TextField(blank=True, help_text="List any dependencies for this integration")
-    notes = models.TextField(blank=True)
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_integrations')
+    complexity = models.CharField(max_length=10, choices=COMPLEXITY_CHOICES, default='medium')
+    description = models.TextField()
+    estimated_weeks = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        unique_together = ['source_application', 'target_application', 'name']
+        unique_together = ['from_app', 'to_app', 'integration_type']
         verbose_name = "Integration"
         verbose_name_plural = "Integrations"
 
     def __str__(self):
-        return f"{self.source_application.name} → {self.target_application.name}: {self.name}"
+        return f"{self.from_app.name} → {self.to_app.name} ({self.integration_type})"
 
     def get_absolute_url(self):
         return reverse('tracker:integration_detail', kwargs={'pk': self.pk})
+
+    @property
+    def complexity_multiplier(self):
+        """Get complexity multiplier for time estimates."""
+        multipliers = {
+            'simple': 1.0,
+            'medium': 1.5,
+            'complex': 2.5
+        }
+        return multipliers.get(self.complexity, 1.0)
+
+    @property
+    def estimated_hours(self):
+        """Convert estimated weeks to hours with complexity factor."""
+        base_hours = self.estimated_weeks * 40  # 40 hours per week
+        return round(base_hours * self.complexity_multiplier)
+
+    def clean(self):
+        """Validate that from_app and to_app are different and from same project."""
+        from django.core.exceptions import ValidationError
+        
+        if self.from_app == self.to_app:
+            raise ValidationError("Cannot integrate an application with itself.")
+        
+        if self.from_app.project != self.to_app.project:
+            raise ValidationError("Can only integrate applications within the same project.")
