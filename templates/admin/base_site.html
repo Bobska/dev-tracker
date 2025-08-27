@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% load static %}{% static 'admin/css/admin_custom.css' %}">
+    <style>
+        /* Additional inline styles for better admin interface */
+        .admin-changelist .results table {
+            margin-top: 10px;
+        }
+        
+        .admin-changelist .results th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .admin-changelist .results tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .admin-changelist .results tbody tr:hover {
+            background-color: #e3f2fd;
+            transition: background-color 0.3s ease;
+        }
+        
+        /* Status badge improvements */
+        .status-badge, .priority-badge, .complexity-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        /* Admin form improvements */
+        .form-row {
+            margin-bottom: 15px;
+        }
+        
+        .form-row .field-box label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        /* Fieldset styling */
+        fieldset.module {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        fieldset.module h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 15px;
+            margin: 0;
+            border-radius: 6px 6px 0 0;
+        }
+        
+        /* Inline forms */
+        .inline-group {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .inline-group .module h2 {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+    </style>
+{% endblock %}

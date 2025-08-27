@@ -1,0 +1,251 @@
+/* Custom Admin CSS for FamilyHub Development Tracker */
+
+/* Admin site branding */
+#header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#branding h1, #branding h1 a:link, #branding h1 a:visited {
+    color: white;
+    font-weight: bold;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Priority indicators */
+.priority-critical {
+    background-color: #dc3545;
+    animation: pulse 2s infinite;
+}
+
+.priority-high {
+    background-color: #fd7e14;
+}
+
+.priority-medium {
+    background-color: #ffc107;
+}
+
+.priority-low {
+    background-color: #28a745;
+}
+
+/* Progress bars */
+.progress-bar {
+    width: 100px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 20px;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    text-align: center;
+    color: white;
+    font-size: 11px;
+    line-height: 20px;
+    font-weight: bold;
+}
+
+/* Overdue indicators */
+.overdue-warning {
+    color: #dc3545;
+    font-weight: bold;
+    animation: blink 1.5s infinite;
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+}
+
+/* Table improvements */
+.admin-changelist .results table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-changelist .results th,
+.admin-changelist .results td {
+    border-bottom: 1px solid #dee2e6;
+    padding: 12px 8px;
+}
+
+.admin-changelist .results tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Inline forms styling */
+.inline-group .tabular tr.has_original {
+    background-color: #fff;
+}
+
+.inline-group .tabular tr.has_original:hover {
+    background-color: #f0f8ff;
+}
+
+/* Filter sidebar enhancements */
+#changelist-filter {
+    background-color: #f8f9fa;
+    border-left: 3px solid #667eea;
+}
+
+#changelist-filter h2 {
+    background-color: #667eea;
+    color: white;
+    margin: 0;
+    padding: 10px;
+    font-size: 13px;
+}
+
+#changelist-filter h3 {
+    color: #495057;
+    font-size: 12px;
+    margin-top: 15px;
+}
+
+/* Action buttons */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Dashboard widgets */
+.dashboard .module {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.dashboard .module:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Fieldset styling */
+fieldset {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+fieldset.collapse {
+    border-color: #e9ecef;
+}
+
+/* File upload indicators */
+.file-upload-info {
+    background-color: #e7f3ff;
+    border: 1px solid #b3d7ff;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .progress-bar {
+        width: 80px;
+    }
+    
+    .status-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+/* Custom list display improvements */
+.admin-changelist .results .action-checkbox-column {
+    width: 30px;
+}
+
+/* Improved change form layout */
+.change-form .form-row {
+    margin-bottom: 15px;
+}
+
+.change-form .form-row .field-box {
+    margin-bottom: 10px;
+}
+
+/* Admin log styling */
+#recent-actions-module h2 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* Custom admin home styling */
+.app-tracker .addlink,
+.app-tracker .changelink {
+    background-color: #667eea;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 5px;
+    transition: all 0.3s ease;
+}
+
+.app-tracker .addlink:hover,
+.app-tracker .changelink:hover {
+    background-color: #764ba2;
+    transform: translateY(-1px);
+}
+
+/* Integration complexity indicators */
+.complexity-simple {
+    background-color: #28a745;
+}
+
+.complexity-medium {
+    background-color: #ffc107;
+}
+
+.complexity-complex {
+    background-color: #dc3545;
+}
+
+/* Age indicators for decisions */
+.age-new {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.age-moderate {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.age-old {
+    color: #dc3545;
+    font-weight: bold;
+}
