@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Decision{% else %}Create Decision{% endif %} - FamilyHub Dev Tracker
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        {% if form.instance.pk %}
+                            Edit Decision: {{ form.instance.title }}
+                        {% else %}
+                            Create New Decision
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% crispy form %}
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Back Button -->
+            <div class="mt-3">
+                <a href="{% url 'tracker:decision_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Decisions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

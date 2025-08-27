@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Decisions - FamilyHub Dev Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-lightbulb me-2 text-primary"></i>
+                Architecture & Technical Decisions
+            </h1>
+            <p class="lead text-muted">Document important decisions and their rationale for future reference.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'tracker:decision_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>New Decision
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="application" class="form-label">Application</label>
+                            <select name="application" class="form-select">
+                                <option value="">All Applications</option>
+                                {% for app in applications %}
+                                    <option value="{{ app.id }}" {% if app_filter == app.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ app.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="decision_type" class="form-label">Type</label>
+                            <select name="decision_type" class="form-select">
+                                <option value="">All Types</option>
+                                {% for value, display in type_choices %}
+                                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                {% for value, display in status_choices %}
+                                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" placeholder="Search decisions..." value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-outline-primary d-block">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decisions Timeline -->
+    <div class="row">
+        {% for decision in decisions %}
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="mb-1">
+                                    <a href="{% url 'tracker:decision_detail' decision.pk %}" class="text-decoration-none">
+                                        {{ decision.title }}
+                                    </a>
+                                </h5>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-{% if decision.decision_type == 'architecture' %}primary{% elif decision.decision_type == 'technology' %}info{% elif decision.decision_type == 'process' %}warning{% else %}secondary{% endif %}">
+                                        {{ decision.get_decision_type_display }}
+                                    </span>
+                                    <span class="badge bg-{% if decision.status == 'approved' %}success{% elif decision.status == 'pending' %}warning{% elif decision.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                        {{ decision.get_status_display }}
+                                    </span>
+                                    {% if decision.application %}
+                                        <span class="badge bg-light text-dark">{{ decision.application.name }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">
+                                    {{ decision.decision_date|date:"M d, Y" }}
+                                    <br>{{ decision.decision_maker }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="text-muted">Problem Statement</h6>
+                                <p class="mb-3">{{ decision.problem|truncatechars:200 }}</p>
+                                
+                                <h6 class="text-muted">Decision</h6>
+                                <p class="mb-3">{{ decision.decision|truncatechars:200 }}</p>
+                                
+                                {% if decision.rationale %}
+                                    <h6 class="text-muted">Rationale</h6>
+                                    <p class="mb-3">{{ decision.rationale|truncatechars:150 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                {% if decision.alternatives %}
+                                    <h6 class="text-muted">Considered Alternatives</h6>
+                                    <ul class="list-unstyled">
+                                        {% for alt in decision.alternatives|slice:":3" %}
+                                            <li class="mb-1">
+                                                <i class="bi bi-arrow-right me-1 text-muted"></i>
+                                                {{ alt|truncatechars:50 }}
+                                            </li>
+                                        {% endfor %}
+                                        {% if decision.alternatives|length > 3 %}
+                                            <li class="text-muted">... and {{ decision.alternatives|length|add:"-3" }} more</li>
+                                        {% endif %}
+                                    </ul>
+                                {% endif %}
+                                
+                                {% if decision.consequences %}
+                                    <h6 class="text-muted mt-3">Key Consequences</h6>
+                                    <ul class="list-unstyled">
+                                        {% for con in decision.consequences|slice:":2" %}
+                                            <li class="mb-1">
+                                                <i class="bi bi-exclamation-circle me-1 text-warning"></i>
+                                                {{ con|truncatechars:50 }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if decision.tags %}
+                            <div class="mt-3">
+                                <small class="text-muted">Tags: </small>
+                                {% for tag in decision.tags %}
+                                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    Last updated: {{ decision.updated_at|date:"M d, Y" }} at {{ decision.updated_at|time:"H:i" }}
+                                </small>
+                            </div>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'tracker:decision_detail' decision.pk %}" class="btn btn-outline-info">
+                                    <i class="bi bi-eye me-1"></i>View Full
+                                </a>
+                                <a href="{% url 'tracker:decision_update' decision.pk %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-lightbulb display-1 text-muted"></i>
+                        <h4 class="mt-3">No Decisions Recorded</h4>
+                        <p class="text-muted">Start documenting your architecture and technical decisions.</p>
+                        <a href="{% url 'tracker:decision_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Record First Decision
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-lightbulb display-4 text-primary"></i>
+                    <h4 class="mt-2">{{ total_decisions }}</h4>
+                    <p class="text-muted mb-0">Total Decisions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle display-4 text-success"></i>
+                    <h4 class="mt-2">{{ approved_decisions }}</h4>
+                    <p class="text-muted mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock display-4 text-warning"></i>
+                    <h4 class="mt-2">{{ pending_decisions }}</h4>
+                    <p class="text-muted mb-0">Pending Review</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar3 display-4 text-info"></i>
+                    <h4 class="mt-2">{{ recent_decisions }}</h4>
+                    <p class="text-muted mb-0">Last 30 Days</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decision Types Chart Placeholder -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Decision Distribution by Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for type_stat in decision_type_stats %}
+                            <div class="col-md-3 text-center">
+                                <div class="decision-type-stat">
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar bg-{% if type_stat.type == 'architecture' %}primary{% elif type_stat.type == 'technology' %}info{% elif type_stat.type == 'process' %}warning{% else %}secondary{% endif %}" 
+                                             style="width: {{ type_stat.percentage }}%"></div>
+                                    </div>
+                                    <h5>{{ type_stat.count }}</h5>
+                                    <p class="text-muted mb-0">{{ type_stat.display_name }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Decision pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in page_obj.paginator.page_range %}
+                            {% if page_num == page_obj.number %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.decision-type-stat {
+    padding: 1rem;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+</style>
+{% endblock %}

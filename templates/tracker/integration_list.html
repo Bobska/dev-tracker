@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}Integrations - FamilyHub Dev Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-diagram-3 me-2 text-primary"></i>
+                App Integrations
+            </h1>
+            <p class="lead text-muted">Track integration points and dependencies between applications.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'tracker:integration_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>New Integration
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="source_app" class="form-label">Source App</label>
+                            <select name="source_app" class="form-select">
+                                <option value="">All Source Apps</option>
+                                {% for app in applications %}
+                                    <option value="{{ app.id }}" {% if source_app_filter == app.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ app.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="target_app" class="form-label">Target App</label>
+                            <select name="target_app" class="form-select">
+                                <option value="">All Target Apps</option>
+                                {% for app in applications %}
+                                    <option value="{{ app.id }}" {% if target_app_filter == app.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ app.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                {% for value, display in status_choices %}
+                                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="complexity" class="form-label">Complexity</label>
+                            <select name="complexity" class="form-select">
+                                <option value="">All Complexity</option>
+                                {% for value, display in complexity_choices %}
+                                    <option value="{{ value }}" {% if complexity_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-outline-primary d-block">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integration Timeline View -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Integration Timeline</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for integration in timeline_integrations %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-{% if integration.status == 'completed' %}success{% elif integration.status == 'in-progress' %}warning{% else %}secondary{% endif %}"></div>
+                                <div class="timeline-content">
+                                    <h6>{{ integration.name }}</h6>
+                                    <p class="text-muted small">{{ integration.source_app.name }} → {{ integration.target_app.name }}</p>
+                                    <small class="text-muted">
+                                        {% if integration.target_date %}Due: {{ integration.target_date|date:"M d, Y" }}{% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integrations Grid -->
+    <div class="row">
+        {% for integration in integrations %}
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">{{ integration.name|truncatechars:25 }}</h6>
+                        <span class="badge bg-{% if integration.status == 'completed' %}success{% elif integration.status == 'in-progress' %}warning{% elif integration.status == 'planning' %}info{% else %}secondary{% endif %}">
+                            {{ integration.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="integration-flow mb-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="app-node">
+                                    <div class="app-icon bg-primary text-white">
+                                        <i class="bi bi-app"></i>
+                                    </div>
+                                    <small class="text-center d-block mt-1">{{ integration.source_app.name|truncatechars:15 }}</small>
+                                </div>
+                                <div class="arrow">
+                                    <i class="bi bi-arrow-right text-muted"></i>
+                                </div>
+                                <div class="app-node">
+                                    <div class="app-icon bg-success text-white">
+                                        <i class="bi bi-app"></i>
+                                    </div>
+                                    <small class="text-center d-block mt-1">{{ integration.target_app.name|truncatechars:15 }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="card-text small text-muted">{{ integration.description|truncatechars:80 }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Type:</small>
+                            <span class="badge bg-light text-dark">{{ integration.get_integration_type_display }}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Complexity:</small>
+                            <span class="badge bg-{% if integration.complexity == 'high' %}danger{% elif integration.complexity == 'medium' %}warning{% else %}success{% endif %}">
+                                {{ integration.get_complexity_display }}
+                            </span>
+                        </div>
+                        
+                        {% if integration.estimated_hours %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">Estimated:</small>
+                                <span class="fw-semibold">{{ integration.estimated_hours }}h</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if integration.target_date %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Target Date:</small>
+                                <small class="{% if integration.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                                    {{ integration.target_date|date:"M d, Y" }}
+                                    {% if integration.is_overdue %}
+                                        <i class="bi bi-exclamation-triangle ms-1"></i>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'tracker:integration_detail' integration.pk %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="{% url 'tracker:integration_update' integration.pk %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-diagram-3 display-1 text-muted"></i>
+                        <h4 class="mt-3">No Integrations Found</h4>
+                        <p class="text-muted">Start by planning your first integration between applications.</p>
+                        <a href="{% url 'tracker:integration_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Create Integration
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-diagram-3 display-4 text-primary"></i>
+                    <h4 class="mt-2">{{ total_integrations }}</h4>
+                    <p class="text-muted mb-0">Total Integrations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle display-4 text-success"></i>
+                    <h4 class="mt-2">{{ completed_integrations }}</h4>
+                    <p class="text-muted mb-0">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-gear display-4 text-warning"></i>
+                    <h4 class="mt-2">{{ in_progress_integrations }}</h4>
+                    <p class="text-muted mb-0">In Progress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock display-4 text-info"></i>
+                    <h4 class="mt-2">{{ total_estimated_hours }}</h4>
+                    <p class="text-muted mb-0">Total Hours Est.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Integration pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in page_obj.paginator.page_range %}
+                            {% if page_num == page_obj.number %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.app-node {
+    text-align: center;
+}
+
+.app-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.arrow {
+    font-size: 1.2rem;
+    margin: 0 10px;
+}
+
+.integration-flow {
+    background: rgba(0,0,0,0.02);
+    padding: 1rem;
+    border-radius: 0.375rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -8px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+.timeline-content {
+    margin-left: 20px;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

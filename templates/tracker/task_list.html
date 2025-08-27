@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Tasks - FamilyHub Dev Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-check2-square me-2 text-primary"></i>
+                Task Management
+            </h1>
+            <p class="lead text-muted">Track and manage development tasks across all applications.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'tracker:task_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>New Task
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="application" class="form-label">Application</label>
+                            <select name="application" class="form-select">
+                                <option value="">All Applications</option>
+                                {% for app in applications %}
+                                    <option value="{{ app.id }}" {% if app_filter == app.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ app.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                {% for value, display in status_choices %}
+                                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="assignee" class="form-label">Assignee</label>
+                            <select name="assignee" class="form-select">
+                                <option value="">All Assignees</option>
+                                {% for value, display in assignee_choices %}
+                                    <option value="{{ value }}" {% if assignee_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select name="priority" class="form-select">
+                                <option value="">All Priorities</option>
+                                {% for value, display in priority_choices %}
+                                    <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" name="overdue" value="true" 
+                                       {% if overdue_filter == 'true' %}checked{% endif %} id="overdue">
+                                <label class="form-check-label" for="overdue">Overdue Only</label>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-outline-primary d-block">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="?view=list" class="btn {% if view_type == 'list' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="bi bi-list-ul me-1"></i>List View
+                </a>
+                <a href="?view=kanban" class="btn {% if view_type == 'kanban' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="bi bi-kanban me-1"></i>Kanban View
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Display -->
+    {% if view_type == 'kanban' %}
+        <!-- Kanban View -->
+        <div class="row">
+            {% for status_display, status_tasks in tasks_by_status.items %}
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="mb-0">{{ status_display }} ({{ status_tasks.count }})</h6>
+                        </div>
+                        <div class="card-body">
+                            {% for task in status_tasks %}
+                                <div class="card mb-2 task-card" data-task-id="{{ task.id }}">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title">
+                                            <a href="{% url 'tracker:task_detail' task.pk %}">{{ task.title|truncatechars:30 }}</a>
+                                        </h6>
+                                        <p class="card-text small text-muted">{{ task.application.name }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}success{% endif %}">
+                                                {{ task.get_priority_display }}
+                                            </span>
+                                            {% if task.due_date %}
+                                                <small class="text-muted">{{ task.due_date|date:"M d" }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">No tasks in this status.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- List View -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select-all"></th>
+                                        <th>Task</th>
+                                        <th>Application</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Assignee</th>
+                                        <th>Due Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in tasks %}
+                                        <tr>
+                                            <td><input type="checkbox" class="task-select" value="{{ task.id }}"></td>
+                                            <td>
+                                                <a href="{% url 'tracker:task_detail' task.pk %}" class="text-decoration-none">
+                                                    {{ task.title }}
+                                                </a>
+                                                {% if task.is_overdue %}
+                                                    <span class="badge bg-danger ms-1">Overdue</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ task.application.name }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in-progress' %}warning{% else %}secondary{% endif %}">
+                                                    {{ task.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}success{% endif %}">
+                                                    {{ task.get_priority_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ task.get_assignee_display }}</td>
+                                            <td>
+                                                {% if task.due_date %}
+                                                    {{ task.due_date|date:"M d, Y" }}
+                                                {% else %}
+                                                    <span class="text-muted">No due date</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{% url 'tracker:task_update' task.pk %}" class="btn btn-outline-primary">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="{% url 'tracker:task_detail' task.pk %}" class="btn btn-outline-info">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-4">
+                                                No tasks found. <a href="{% url 'tracker:task_create' %}">Create the first task</a>.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Operations -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Bulk Operations</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'tracker:bulk_task_operations' %}" id="bulk-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="task_ids" id="selected-tasks">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <select name="action" class="form-select" required>
+                                        <option value="">Select Action</option>
+                                        <option value="complete">Mark as Complete</option>
+                                        <option value="in_progress">Mark as In Progress</option>
+                                        <option value="pending">Mark as Pending</option>
+                                        <option value="change_assignee">Change Assignee</option>
+                                        <option value="update_due_date">Update Due Date</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3" id="assignee-field" style="display: none;">
+                                    <select name="new_assignee" class="form-select">
+                                        <option value="">Select Assignee</option>
+                                        {% for value, display in assignee_choices %}
+                                            <option value="{{ value }}">{{ display }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3" id="date-field" style="display: none;">
+                                    <input type="date" name="new_due_date" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-warning" disabled id="bulk-submit">
+                                        Apply to Selected
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <nav aria-label="Task pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in page_obj.paginator.page_range %}
+                                {% if page_num == page_obj.number %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Bulk operations JavaScript
+    const selectAll = document.getElementById('select-all');
+    const taskSelects = document.querySelectorAll('.task-select');
+    const bulkSubmit = document.getElementById('bulk-submit');
+    const selectedTasksInput = document.getElementById('selected-tasks');
+    const actionSelect = document.querySelector('select[name="action"]');
+    const assigneeField = document.getElementById('assignee-field');
+    const dateField = document.getElementById('date-field');
+
+    // Select all functionality
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            taskSelects.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkForm();
+        });
+    }
+
+    // Individual checkbox functionality
+    taskSelects.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkForm);
+    });
+
+    // Action select functionality
+    if (actionSelect) {
+        actionSelect.addEventListener('change', function() {
+            const action = this.value;
+            assigneeField.style.display = action === 'change_assignee' ? 'block' : 'none';
+            dateField.style.display = action === 'update_due_date' ? 'block' : 'none';
+        });
+    }
+
+    function updateBulkForm() {
+        const selectedTasks = Array.from(taskSelects)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+        
+        selectedTasksInput.value = selectedTasks.join(',');
+        bulkSubmit.disabled = selectedTasks.length === 0;
+        
+        // Update select all checkbox state
+        if (selectAll) {
+            selectAll.checked = selectedTasks.length === taskSelects.length;
+            selectAll.indeterminate = selectedTasks.length > 0 && selectedTasks.length < taskSelects.length;
+        }
+    }
+});
+</script>
+{% endblock %}
