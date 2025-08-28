@@ -2,9 +2,10 @@
 
 import django.core.validators
 import django.db.models.deletion
-import tracker.models
 from django.conf import settings
 from django.db import migrations, models
+
+import tracker.models
 
 
 class Migration(migrations.Migration):
@@ -17,129 +18,414 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('description', models.TextField()),
-                ('status', models.CharField(choices=[('planning', 'Planning'), ('development', 'Development'), ('testing', 'Testing'), ('completed', 'Completed'), ('on-hold', 'On Hold')], default='planning', max_length=20)),
-                ('start_date', models.DateField()),
-                ('target_date', models.DateField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='owned_projects', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("description", models.TextField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("planning", "Planning"),
+                            ("development", "Development"),
+                            ("testing", "Testing"),
+                            ("completed", "Completed"),
+                            ("on-hold", "On Hold"),
+                        ],
+                        default="planning",
+                        max_length=20,
+                    ),
+                ),
+                ("start_date", models.DateField()),
+                ("target_date", models.DateField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="owned_projects",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Project',
-                'verbose_name_plural': 'Projects',
-                'ordering': ['-created_at'],
+                "verbose_name": "Project",
+                "verbose_name_plural": "Projects",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Decision',
+            name="Decision",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('description', models.TextField()),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('decided', 'Decided'), ('implemented', 'Implemented'), ('changed', 'Changed')], default='pending', max_length=20)),
-                ('impact', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], default='medium', max_length=10)),
-                ('decided_date', models.DateField(blank=True, null=True)),
-                ('decision_maker', models.CharField(blank=True, max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='decisions', to='tracker.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=200)),
+                ("description", models.TextField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("decided", "Decided"),
+                            ("implemented", "Implemented"),
+                            ("changed", "Changed"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "impact",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        default="medium",
+                        max_length=10,
+                    ),
+                ),
+                ("decided_date", models.DateField(blank=True, null=True)),
+                ("decision_maker", models.CharField(blank=True, max_length=100)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="decisions",
+                        to="tracker.project",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Decision',
-                'verbose_name_plural': 'Decisions',
-                'ordering': ['-created_at'],
+                "verbose_name": "Decision",
+                "verbose_name_plural": "Decisions",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Application',
+            name="Application",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('description', models.TextField()),
-                ('complexity', models.CharField(choices=[('simple', 'Simple'), ('medium', 'Medium'), ('high', 'High')], default='medium', max_length=20)),
-                ('status', models.CharField(choices=[('planning', 'Planning'), ('ready', 'Ready'), ('development', 'Development'), ('testing', 'Testing'), ('production', 'Production')], default='planning', max_length=20)),
-                ('estimated_weeks', models.PositiveIntegerField()),
-                ('features', models.JSONField(blank=True, default=list)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='applications', to='tracker.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("description", models.TextField()),
+                (
+                    "complexity",
+                    models.CharField(
+                        choices=[
+                            ("simple", "Simple"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                        ],
+                        default="medium",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("planning", "Planning"),
+                            ("ready", "Ready"),
+                            ("development", "Development"),
+                            ("testing", "Testing"),
+                            ("production", "Production"),
+                        ],
+                        default="planning",
+                        max_length=20,
+                    ),
+                ),
+                ("estimated_weeks", models.PositiveIntegerField()),
+                ("features", models.JSONField(blank=True, default=list)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="applications",
+                        to="tracker.project",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Application',
-                'verbose_name_plural': 'Applications',
-                'ordering': ['project', 'name'],
-                'unique_together': {('project', 'name')},
+                "verbose_name": "Application",
+                "verbose_name_plural": "Applications",
+                "ordering": ["project", "name"],
+                "unique_together": {("project", "name")},
             },
         ),
         migrations.CreateModel(
-            name='Task',
+            name="Task",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('priority', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], default='medium', max_length=10)),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('in-progress', 'In Progress'), ('completed', 'Completed'), ('blocked', 'Blocked')], default='pending', max_length=20)),
-                ('assignee', models.CharField(choices=[('claude', 'Claude'), ('github-copilot', 'GitHub Copilot'), ('human', 'Human'), ('team', 'Team')], default='human', max_length=20)),
-                ('due_date', models.DateField(blank=True, null=True)),
-                ('estimated_hours', models.PositiveIntegerField(blank=True, null=True)),
-                ('actual_hours', models.PositiveIntegerField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('application', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tasks', to='tracker.application')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        default="medium",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("in-progress", "In Progress"),
+                            ("completed", "Completed"),
+                            ("blocked", "Blocked"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "assignee",
+                    models.CharField(
+                        choices=[
+                            ("claude", "Claude"),
+                            ("github-copilot", "GitHub Copilot"),
+                            ("human", "Human"),
+                            ("team", "Team"),
+                        ],
+                        default="human",
+                        max_length=20,
+                    ),
+                ),
+                ("due_date", models.DateField(blank=True, null=True)),
+                ("estimated_hours", models.PositiveIntegerField(blank=True, null=True)),
+                ("actual_hours", models.PositiveIntegerField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "application",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tasks",
+                        to="tracker.application",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Task',
-                'verbose_name_plural': 'Tasks',
-                'ordering': ['-created_at'],
+                "verbose_name": "Task",
+                "verbose_name_plural": "Tasks",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Artifact',
+            name="Artifact",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200)),
-                ('type', models.CharField(choices=[('requirements', 'Requirements'), ('code', 'Code'), ('documentation', 'Documentation'), ('architecture', 'Architecture'), ('design', 'Design')], max_length=20)),
-                ('description', models.TextField(blank=True)),
-                ('file_upload', models.FileField(blank=True, upload_to=tracker.models.artifact_upload_path, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'md', 'py', 'js', 'html', 'css'])])),
-                ('content', models.TextField(blank=True, help_text='Text content for the artifact')),
-                ('version', models.CharField(default='1.0', max_length=10)),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('in-progress', 'In Progress'), ('review', 'Review'), ('complete', 'Complete')], default='draft', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('application', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='artifacts', to='tracker.application')),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='created_artifacts', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[
+                            ("requirements", "Requirements"),
+                            ("code", "Code"),
+                            ("documentation", "Documentation"),
+                            ("architecture", "Architecture"),
+                            ("design", "Design"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("description", models.TextField(blank=True)),
+                (
+                    "file_upload",
+                    models.FileField(
+                        blank=True,
+                        upload_to=tracker.models.artifact_upload_path,
+                        validators=[
+                            django.core.validators.FileExtensionValidator(
+                                allowed_extensions=[
+                                    "pdf",
+                                    "doc",
+                                    "docx",
+                                    "txt",
+                                    "md",
+                                    "py",
+                                    "js",
+                                    "html",
+                                    "css",
+                                ]
+                            )
+                        ],
+                    ),
+                ),
+                (
+                    "content",
+                    models.TextField(
+                        blank=True, help_text="Text content for the artifact"
+                    ),
+                ),
+                ("version", models.CharField(default="1.0", max_length=10)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("in-progress", "In Progress"),
+                            ("review", "Review"),
+                            ("complete", "Complete"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "application",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="artifacts",
+                        to="tracker.application",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="created_artifacts",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Artifact',
-                'verbose_name_plural': 'Artifacts',
-                'ordering': ['-updated_at'],
-                'unique_together': {('application', 'name', 'version')},
+                "verbose_name": "Artifact",
+                "verbose_name_plural": "Artifacts",
+                "ordering": ["-updated_at"],
+                "unique_together": {("application", "name", "version")},
             },
         ),
         migrations.CreateModel(
-            name='Integration',
+            name="Integration",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('integration_type', models.CharField(choices=[('data-sharing', 'Data Sharing'), ('ui-integration', 'UI Integration'), ('api-integration', 'API Integration'), ('full-merge', 'Full Merge')], max_length=20)),
-                ('status', models.CharField(choices=[('planned', 'Planned'), ('in-progress', 'In Progress'), ('completed', 'Completed'), ('blocked', 'Blocked')], default='planned', max_length=20)),
-                ('complexity', models.CharField(choices=[('simple', 'Simple'), ('medium', 'Medium'), ('complex', 'Complex')], default='medium', max_length=10)),
-                ('description', models.TextField()),
-                ('estimated_weeks', models.PositiveIntegerField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('from_app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='integrations_from', to='tracker.application')),
-                ('to_app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='integrations_to', to='tracker.application')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "integration_type",
+                    models.CharField(
+                        choices=[
+                            ("data-sharing", "Data Sharing"),
+                            ("ui-integration", "UI Integration"),
+                            ("api-integration", "API Integration"),
+                            ("full-merge", "Full Merge"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("planned", "Planned"),
+                            ("in-progress", "In Progress"),
+                            ("completed", "Completed"),
+                            ("blocked", "Blocked"),
+                        ],
+                        default="planned",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "complexity",
+                    models.CharField(
+                        choices=[
+                            ("simple", "Simple"),
+                            ("medium", "Medium"),
+                            ("complex", "Complex"),
+                        ],
+                        default="medium",
+                        max_length=10,
+                    ),
+                ),
+                ("description", models.TextField()),
+                ("estimated_weeks", models.PositiveIntegerField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "from_app",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="integrations_from",
+                        to="tracker.application",
+                    ),
+                ),
+                (
+                    "to_app",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="integrations_to",
+                        to="tracker.application",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Integration',
-                'verbose_name_plural': 'Integrations',
-                'ordering': ['-created_at'],
-                'unique_together': {('from_app', 'to_app', 'integration_type')},
+                "verbose_name": "Integration",
+                "verbose_name_plural": "Integrations",
+                "ordering": ["-created_at"],
+                "unique_together": {("from_app", "to_app", "integration_type")},
             },
         ),
     ]

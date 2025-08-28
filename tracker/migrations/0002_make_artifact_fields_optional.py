@@ -8,43 +8,75 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tracker', '0001_initial'),
+        ("tracker", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='artifact',
+            name="artifact",
             unique_together=set(),
         ),
         migrations.AlterField(
-            model_name='artifact',
-            name='application',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='artifacts', to='tracker.application'),
+            model_name="artifact",
+            name="application",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="artifacts",
+                to="tracker.application",
+            ),
         ),
         migrations.AlterField(
-            model_name='artifact',
-            name='content',
-            field=models.TextField(help_text='Text content for the artifact'),
+            model_name="artifact",
+            name="content",
+            field=models.TextField(help_text="Text content for the artifact"),
         ),
         migrations.AlterField(
-            model_name='artifact',
-            name='created_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='created_artifacts', to=settings.AUTH_USER_MODEL),
+            model_name="artifact",
+            name="created_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="created_artifacts",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='artifact',
-            name='status',
-            field=models.CharField(blank=True, choices=[('draft', 'Draft'), ('in-progress', 'In Progress'), ('review', 'Review'), ('complete', 'Complete')], default='draft', max_length=20),
+            model_name="artifact",
+            name="status",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("draft", "Draft"),
+                    ("in-progress", "In Progress"),
+                    ("review", "Review"),
+                    ("complete", "Complete"),
+                ],
+                default="draft",
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='artifact',
-            name='type',
-            field=models.CharField(blank=True, choices=[('requirements', 'Requirements'), ('code', 'Code'), ('documentation', 'Documentation'), ('architecture', 'Architecture'), ('design', 'Design')], max_length=20),
+            model_name="artifact",
+            name="type",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("requirements", "Requirements"),
+                    ("code", "Code"),
+                    ("documentation", "Documentation"),
+                    ("architecture", "Architecture"),
+                    ("design", "Design"),
+                ],
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='artifact',
-            name='version',
-            field=models.CharField(blank=True, default='1.0', max_length=10),
+            model_name="artifact",
+            name="version",
+            field=models.CharField(blank=True, default="1.0", max_length=10),
         ),
     ]

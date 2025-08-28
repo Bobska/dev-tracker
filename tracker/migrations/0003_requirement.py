@@ -6,23 +6,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tracker', '0002_make_artifact_fields_optional'),
+        ("tracker", "0002_make_artifact_fields_optional"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Requirement',
+            name="Requirement",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='Requirement name or title', max_length=200)),
-                ('content', models.TextField(help_text='Requirement content in Markdown format for Claude Artifact display')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="Requirement name or title", max_length=200
+                    ),
+                ),
+                (
+                    "content",
+                    models.TextField(
+                        help_text="Requirement content in Markdown format for Claude Artifact display"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'Requirement',
-                'verbose_name_plural': 'Requirements',
-                'ordering': ['-updated_at'],
+                "verbose_name": "Requirement",
+                "verbose_name_plural": "Requirements",
+                "ordering": ["-updated_at"],
             },
         ),
     ]
