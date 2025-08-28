@@ -189,29 +189,40 @@
                     <h5 class="card-title mb-0">Applications Involved</h5>
                 </div>
                 <div class="card-body">
-                    {% if integration.applications.all %}
-                        <div class="row">
-                            {% for app in integration.applications.all %}
-                            <div class="col-md-6 mb-3">
-                                <div class="card border-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title">
-                                            <a href="{% url 'tracker:application_detail' app.pk %}" class="text-decoration-none">
-                                                {{ app.name }}
-                                            </a>
-                                        </h6>
-                                        <p class="card-text small text-muted mb-1">{{ app.description|truncatewords:15 }}</p>
-                                        <span class="badge bg-{{ app.status|yesno:'success,warning,secondary' }}">
-                                            {{ app.get_status_display }}
-                                        </span>
-                                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-light">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">
+                                        <span class="badge bg-primary me-2">From</span>
+                                        <a href="{% url 'tracker:application_detail' integration.from_app.pk %}" class="text-decoration-none">
+                                            {{ integration.from_app.name }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text small text-muted mb-1">{{ integration.from_app.description|truncatewords:15 }}</p>
+                                    <span class="badge bg-{% if integration.from_app.status == 'production' %}success{% elif integration.from_app.status == 'development' %}warning{% else %}secondary{% endif %}">
+                                        {{ integration.from_app.get_status_display }}
+                                    </span>
                                 </div>
                             </div>
-                            {% endfor %}
                         </div>
-                    {% else %}
-                        <p class="text-muted">No applications assigned to this integration yet.</p>
-                    {% endif %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-light">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">
+                                        <span class="badge bg-success me-2">To</span>
+                                        <a href="{% url 'tracker:application_detail' integration.to_app.pk %}" class="text-decoration-none">
+                                            {{ integration.to_app.name }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text small text-muted mb-1">{{ integration.to_app.description|truncatewords:15 }}</p>
+                                    <span class="badge bg-{% if integration.to_app.status == 'production' %}success{% elif integration.to_app.status == 'development' %}warning{% else %}secondary{% endif %}">
+                                        {{ integration.to_app.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,7 +244,11 @@
 
                     <div class="mb-3">
                         <small class="text-muted">Applications Count:</small><br>
-                        {{ integration.applications.count }} application{{ integration.applications.count|pluralize }}
+                                            <p><strong>Involved Apps:</strong> 
+                        <a href="{% url 'tracker:application_detail' integration.from_app.pk %}" class="text-decoration-none">{{ integration.from_app.name }}</a>
+                        <i class="bi bi-arrow-right mx-2"></i>
+                        <a href="{% url 'tracker:application_detail' integration.to_app.pk %}" class="text-decoration-none">{{ integration.to_app.name }}</a>
+                    </p>
                     </div>
 
                     <div class="mb-3">

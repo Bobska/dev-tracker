@@ -84,6 +84,28 @@ class Project(models.Model):
         """Number of applications in production status."""
         return self.applications.filter(status='production').count()
 
+    @property
+    def days_remaining(self):
+        """Days remaining until target date (negative if overdue)."""
+        if self.target_date:
+            delta = self.target_date - timezone.now().date()
+            return delta.days
+        return 0
+
+    @property
+    def is_overdue(self):
+        """Check if project is past its target date."""
+        if self.target_date:
+            return timezone.now().date() > self.target_date
+        return False
+
+    @property
+    def days_overdue(self):
+        """Get number of days overdue (positive number)."""
+        if self.is_overdue:
+            return abs(self.days_remaining)
+        return 0
+
 
 class Application(models.Model):
     """
@@ -142,6 +164,15 @@ class Application(models.Model):
             due_date__lt=today,
             status__in=['pending', 'in-progress']
         ).count()
+
+    @property
+    def days_to_target(self):
+        """Calculate days to target completion (estimated based on weeks)."""
+        if not self.estimated_weeks:
+            return None
+        target_date = self.created_at.date() + timezone.timedelta(weeks=self.estimated_weeks)
+        today = timezone.now().date()
+        return (target_date - today).days
 
 
 class Artifact(models.Model):
@@ -255,6 +286,14 @@ class Task(models.Model):
         return self.due_date < timezone.now().date() and self.status in ['pending', 'in-progress']
 
     @property
+    def days_until_due(self):
+        """Calculate days until due date."""
+        if not self.due_date:
+            return None
+        today = timezone.now().date()
+        return (self.due_date - today).days
+
+    @property
     def hours_variance(self):
         """Calculate variance between estimated and actual hours."""
         if self.estimated_hours and self.actual_hours:
@@ -365,6 +404,11 @@ class Integration(models.Model):
 
     def get_absolute_url(self):
         return reverse('tracker:integration_detail', kwargs={'pk': self.pk})
+
+    @property
+    def project(self):
+        """Get the project from the from_app (assuming both apps are in the same project)."""
+        return self.from_app.project
 
     @property
     def complexity_multiplier(self):
