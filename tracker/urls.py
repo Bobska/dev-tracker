@@ -58,6 +58,13 @@ urlpatterns = [
     path('integrations/<int:pk>/edit/', views.IntegrationUpdateView.as_view(), name='integration_update'),
     path('integrations/<int:pk>/delete/', views.IntegrationDeleteView.as_view(), name='integration_delete'),
     
+    # Requirements URLs
+    path('requirements/', views.RequirementListView.as_view(), name='requirement_list'),
+    path('requirements/new/', views.RequirementCreateView.as_view(), name='requirement_create'),
+    path('requirements/<int:pk>/', views.RequirementDetailView.as_view(), name='requirement_detail'),
+    path('requirements/<int:pk>/edit/', views.RequirementUpdateView.as_view(), name='requirement_update'),
+    path('requirements/<int:pk>/delete/', views.RequirementDeleteView.as_view(), name='requirement_delete'),
+    
     # Search and Utility
     path('search/', views.search_view, name='search'),
 ]

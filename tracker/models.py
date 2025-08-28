@@ -436,3 +436,24 @@ class Integration(models.Model):
         
         if self.from_app.project != self.to_app.project:
             raise ValidationError("Can only integrate applications within the same project.")
+
+
+class Requirement(models.Model):
+    """
+    Requirements documentation with Claude Artifact-style formatting
+    """
+    name = models.CharField(max_length=200, help_text="Requirement name or title")
+    content = models.TextField(help_text="Requirement content in Markdown format for Claude Artifact display")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = "Requirement"
+        verbose_name_plural = "Requirements"
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('tracker:requirement_detail', kwargs={'pk': self.pk})

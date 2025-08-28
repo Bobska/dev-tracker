@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Requirement - FamilyHub Development Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Header Section -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'tracker:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'tracker:requirement_list' %}">Requirements</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'tracker:requirement_detail' requirement.pk %}">{{ requirement.name }}</a></li>
+                    <li class="breadcrumb-item active">Delete</li>
+                </ol>
+            </nav>
+
+            <!-- Delete Confirmation Card -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Warning Message -->
+                    <div class="alert alert-warning d-flex align-items-start" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2 mt-1 text-warning"></i>
+                        <div>
+                            <strong>Warning!</strong> This action cannot be undone. The requirement and all its content will be permanently deleted.
+                        </div>
+                    </div>
+
+                    <!-- Requirement Details -->
+                    <div class="mb-4">
+                        <h5 class="text-danger mb-3">You are about to delete:</h5>
+                        
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-file-text text-primary me-2"></i>
+                                    {{ requirement.name }}
+                                </h6>
+                                
+                                <div class="row text-muted small">
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <i class="bi bi-calendar-plus me-1"></i>
+                                            <strong>Created:</strong> {{ requirement.created_at|date:"M d, Y H:i" }}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-pencil-square me-1"></i>
+                                            <strong>Updated:</strong> {{ requirement.updated_at|date:"M d, Y H:i" }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <i class="bi bi-file-text me-1"></i>
+                                            <strong>Content:</strong> {{ requirement.content|length }} characters
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-chat-text me-1"></i>
+                                            <strong>Words:</strong> {{ requirement.content|wordcount }} words
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Content Preview -->
+                                {% if requirement.content %}
+                                    <hr>
+                                    <div class="mt-3">
+                                        <small class="text-muted">Content Preview:</small>
+                                        <div class="border rounded p-2 mt-1 bg-white" style="max-height: 100px; overflow-y: auto;">
+                                            <small class="text-muted">
+                                                {% if requirement.content|length > 200 %}
+                                                    {{ requirement.content|truncatechars:200 }}
+                                                {% else %}
+                                                    {{ requirement.content|linebreaks }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation Form -->
+                    <form method="post" class="d-flex gap-3">
+                        {% csrf_token %}
+                        
+                        <!-- Confirm Delete Button -->
+                        <button type="submit" class="btn btn-danger btn-lg flex-fill">
+                            <i class="bi bi-trash me-2"></i>
+                            Yes, Delete Requirement
+                        </button>
+                        
+                        <!-- Cancel Button -->
+                        <a href="{% url 'tracker:requirement_detail' requirement.pk %}" class="btn btn-secondary btn-lg flex-fill">
+                            <i class="bi bi-x-lg me-2"></i>
+                            Cancel
+                        </a>
+                    </form>
+
+                    <!-- Additional Actions -->
+                    <div class="mt-4 pt-3 border-top">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Alternative actions:
+                        </small>
+                        <div class="mt-2">
+                            <a href="{% url 'tracker:requirement_update' requirement.pk %}" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="bi bi-pencil me-1"></i>Edit Instead
+                            </a>
+                            <a href="{% url 'tracker:requirement_list' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-list me-1"></i>View All Requirements
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Information -->
+            <div class="card mt-3 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Need Help?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <ul class="mb-0 ps-3">
+                            <li>If you just want to modify the content, use the <strong>Edit</strong> option instead</li>
+                            <li>Once deleted, this requirement cannot be recovered</li>
+                            <li>Consider copying important content before deletion</li>
+                            <li>You can always create a new requirement with similar content</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation dialog for extra safety
+    const deleteForm = document.querySelector('form');
+    const deleteButton = deleteForm.querySelector('button[type="submit"]');
+    
+    deleteButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Double confirmation
+        const confirmDelete = confirm(
+            'Are you absolutely sure you want to delete "{{ requirement.name }}"?\n\n' +
+            'This action cannot be undone and will permanently remove:\n' +
+            '• The requirement name and content\n' +
+            '• All associated metadata\n' +
+            '• Creation and update history\n\n' +
+            'Click OK to proceed with deletion, or Cancel to abort.'
+        );
+        
+        if (confirmDelete) {
+            // Add loading state
+            deleteButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deleting...';
+            deleteButton.disabled = true;
+            
+            // Submit the form
+            deleteForm.submit();
+        }
+    });
+    
+    // Auto-focus on cancel button for safety
+    document.querySelector('a[href*="requirement_detail"]').focus();
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape key to cancel
+        if (e.key === 'Escape') {
+            window.location.href = "{% url 'tracker:requirement_detail' requirement.pk %}";
+        }
+        
+        // Ctrl+Enter to delete (for power users)
+        if (e.ctrlKey && e.key === 'Enter') {
+            deleteButton.click();
+        }
+    });
+});
+</script>
+{% endblock %}

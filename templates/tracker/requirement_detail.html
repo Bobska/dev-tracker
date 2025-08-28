@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ requirement.name }} - Requirements - FamilyHub Development Tracker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+<style>
+/* Claude Artifact Style CSS */
+.artifact-container {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    margin: 1rem 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+}
+
+.artifact-container h1 {
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+.artifact-container h2 {
+    color: #34495e;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #bdc3c7;
+    padding-bottom: 0.3rem;
+}
+
+.artifact-container h3 {
+    color: #34495e;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.artifact-container h4 {
+    color: #34495e;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.artifact-container p {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.artifact-container ul, .artifact-container ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.artifact-container li {
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.artifact-container blockquote {
+    border-left: 4px solid #3498db;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: #7f8c8d;
+    background: #ecf0f1;
+    padding: 1rem;
+    border-radius: 0.25rem;
+}
+
+.artifact-container code {
+    background: #f1c40f;
+    color: #2c3e50;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+
+.artifact-container pre {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid #34495e;
+}
+
+.artifact-container pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+.artifact-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.artifact-container th, .artifact-container td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.artifact-container th {
+    background: #3498db;
+    color: white;
+    font-weight: 600;
+}
+
+.artifact-container tr:hover {
+    background: #f8f9fa;
+}
+
+.artifact-container strong, .artifact-container b {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.artifact-container em, .artifact-container i {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.artifact-container hr {
+    border: none;
+    border-top: 2px solid #bdc3c7;
+    margin: 2rem 0;
+}
+
+.artifact-container .highlight {
+    background: #f39c12;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    color: white;
+}
+
+.artifact-container .note {
+    background: #3498db;
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    border-left: 4px solid #2980b9;
+}
+
+.artifact-container .warning {
+    background: #e74c3c;
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    border-left: 4px solid #c0392b;
+}
+
+.artifact-container .success {
+    background: #27ae60;
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    border-left: 4px solid #229954;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div class="flex-grow-1">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'tracker:dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'tracker:requirement_list' %}">Requirements</a></li>
+                            <li class="breadcrumb-item active">{{ requirement.name }}</li>
+                        </ol>
+                    </nav>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <h1 class="mb-0">
+                            <i class="bi bi-file-text text-primary me-2"></i>{{ requirement.name }}
+                        </h1>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar-plus me-1"></i>Created: {{ requirement.created_at|date:"M d, Y H:i" }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="bi bi-pencil-square me-1"></i>Updated: {{ requirement.updated_at|date:"M d, Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <a href="{% url 'tracker:requirement_update' requirement.pk %}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    <a href="{% url 'tracker:requirement_delete' requirement.pk %}" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </a>
+                    <a href="{% url 'tracker:requirement_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+
+            <!-- Claude Artifact Style Content -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-stars me-2"></i>Requirement Content
+                        <small class="ms-2 opacity-75">(Claude Artifact Style)</small>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="artifact-container">
+                        {{ requirement.content|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-info-circle me-2"></i>Requirement Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Name:</dt>
+                                <dd class="col-sm-9">{{ requirement.name }}</dd>
+                                
+                                <dt class="col-sm-3">Content Length:</dt>
+                                <dd class="col-sm-9">{{ requirement.content|length }} characters</dd>
+                                
+                                <dt class="col-sm-3">Word Count:</dt>
+                                <dd class="col-sm-9">{{ requirement.content|wordcount }} words</dd>
+                                
+                                <dt class="col-sm-3">Created:</dt>
+                                <dd class="col-sm-9">{{ requirement.created_at|date:"F d, Y H:i" }}</dd>
+                                
+                                <dt class="col-sm-3">Last Updated:</dt>
+                                <dd class="col-sm-9">{{ requirement.updated_at|date:"F d, Y H:i" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-tools me-2"></i>Quick Actions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'tracker:requirement_update' requirement.pk %}" class="btn btn-primary">
+                                    <i class="bi bi-pencil me-1"></i>Edit Requirement
+                                </a>
+                                <a href="{% url 'tracker:requirement_create' %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-plus-lg me-1"></i>Create New Requirement
+                                </a>
+                                <hr>
+                                <a href="{% url 'tracker:requirement_list' %}" class="btn btn-secondary">
+                                    <i class="bi bi-list me-1"></i>All Requirements
+                                </a>
+                                <a href="{% url 'tracker:dashboard' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-house me-1"></i>Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced Markdown-like formatting for Claude Artifact style
+    const content = document.querySelector('.artifact-container');
+    if (content) {
+        let html = content.innerHTML;
+        
+        // Convert **bold** to strong tags
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Convert *italic* to em tags
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Convert `code` to code tags
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Convert ### headers
+        html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+        
+        // Convert bullet points
+        html = html.replace(/^\- (.*$)/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+        
+        // Convert numbered lists
+        html = html.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+        
+        // Convert code blocks
+        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+        
+        // Convert horizontal rules
+        html = html.replace(/^---$/gm, '<hr>');
+        
+        // Convert > blockquotes
+        html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+        
+        content.innerHTML = html;
+        
+        // Initialize syntax highlighting
+        if (typeof Prism !== 'undefined') {
+            Prism.highlightAllUnder(content);
+        }
+    }
+});
+</script>
+{% endblock %}

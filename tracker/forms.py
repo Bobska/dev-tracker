@@ -6,7 +6,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Submit, Row, Column, HTML, Field
 from crispy_forms.bootstrap import FormActions
 import json
-from .models import Project, Application, Artifact, Task, Decision, Integration
+from .models import Project, Application, Artifact, Task, Decision, Integration, Requirement
 
 User = get_user_model()
 
@@ -616,3 +616,39 @@ class IntegrationForm(forms.ModelForm):
             raise ValidationError("Can only integrate applications within the same project.")
 
         return cleaned_data
+
+
+class RequirementForm(forms.ModelForm):
+    """Form for creating and updating requirements with Claude Artifact-style formatting."""
+    
+    class Meta:
+        model = Requirement
+        fields = ['name', 'content']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Requirement name or title (required)'
+            }),
+            'content': forms.Textarea(attrs={
+                'rows': 15, 
+                'class': 'form-control font-monospace',
+                'placeholder': 'Enter requirement content in Markdown format...\n\nThis content will be displayed with Claude Artifact-style formatting.\n\nExample:\n# Main Heading\n## Sub Heading\n- Bullet point\n- Another point\n\n```python\ncode_example = "hello"\n```'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Requirement Information',
+                HTML('<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><strong>Claude Artifact Style:</strong> Content will be formatted with Markdown for professional display</div>'),
+                'name',
+                'content',
+            ),
+            FormActions(
+                Submit('submit', 'Save Requirement', css_class='btn btn-primary'),
+                HTML('<a href="{% url "tracker:requirement_list" %}" class="btn btn-secondary ms-2">Cancel</a>'),
+            )
+        )

@@ -11,13 +11,14 @@ from django.db.models import Q, Count, Avg, Sum
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models.functions import TruncMonth
+from django.db import models
 import json
 from datetime import datetime, timedelta
 
-from .models import Project, Application, Artifact, Task, Decision, Integration
+from .models import Project, Application, Artifact, Task, Decision, Integration, Requirement
 from .forms import (
     ProjectForm, ApplicationForm, ArtifactForm, TaskForm, 
-    SearchForm, BulkTaskForm, DecisionForm, IntegrationForm
+    SearchForm, BulkTaskForm, DecisionForm, IntegrationForm, RequirementForm
 )
 
 
@@ -996,4 +997,71 @@ class IntegrationDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Integration deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+# Requirements Views
+class RequirementListView(LoginRequiredMixin, ListView):
+    """List all requirements with search and filtering."""
+    model = Requirement
+    template_name = 'tracker/requirement_list.html'
+    context_object_name = 'requirements'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Requirement.objects.all()
+        
+        # Search functionality
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(name__icontains=search_query) |
+                models.Q(content__icontains=search_query)
+            )
+        
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
+
+
+class RequirementDetailView(LoginRequiredMixin, DetailView):
+    """Display detailed view of a requirement with Claude Artifact-style formatting."""
+    model = Requirement
+    template_name = 'tracker/requirement_detail.html'
+    context_object_name = 'requirement'
+
+
+class RequirementCreateView(LoginRequiredMixin, CreateView):
+    """Create new requirement with Claude Artifact-style content."""
+    model = Requirement
+    form_class = RequirementForm
+    template_name = 'tracker/requirement_form.html'
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Requirement "{form.instance.name}" created successfully!')
+        return super().form_valid(form)
+
+
+class RequirementUpdateView(LoginRequiredMixin, UpdateView):
+    """Update existing requirement."""
+    model = Requirement
+    form_class = RequirementForm
+    template_name = 'tracker/requirement_form.html'
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Requirement "{form.instance.name}" updated successfully!')
+        return super().form_valid(form)
+
+
+class RequirementDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete a requirement with confirmation."""
+    model = Requirement
+    template_name = 'tracker/requirement_confirm_delete.html'
+    success_url = reverse_lazy('tracker:requirement_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Requirement deleted successfully.')
         return super().delete(request, *args, **kwargs)

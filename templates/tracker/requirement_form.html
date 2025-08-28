@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit{% else %}Create New{% endif %} Requirement - FamilyHub Development Tracker
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.claude-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.claude-info h5 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.claude-info ul {
+    margin-bottom: 0;
+}
+
+.claude-info li {
+    margin-bottom: 0.5rem;
+}
+
+.form-container {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 2rem;
+}
+
+.preview-area {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1.5rem;
+    min-height: 200px;
+    margin-top: 1rem;
+}
+
+.character-count {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-align: right;
+    margin-top: 0.5rem;
+}
+
+.textarea-container {
+    position: relative;
+}
+
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(-45deg, transparent 0%, transparent 40%, #dee2e6 40%, #dee2e6 60%, transparent 60%);
+    cursor: nw-resize;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'tracker:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'tracker:requirement_list' %}">Requirements</a></li>
+                    {% if form.instance.pk %}
+                        <li class="breadcrumb-item"><a href="{% url 'tracker:requirement_detail' form.instance.pk %}">{{ form.instance.name }}</a></li>
+                        <li class="breadcrumb-item active">Edit</li>
+                    {% else %}
+                        <li class="breadcrumb-item active">Create New</li>
+                    {% endif %}
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="bi bi-file-text text-primary me-2"></i>
+                    {% if form.instance.pk %}Edit Requirement{% else %}Create New Requirement{% endif %}
+                </h1>
+                <a href="{% url 'tracker:requirement_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Claude Artifact Information -->
+            <div class="claude-info">
+                <h5>
+                    <i class="bi bi-stars me-2"></i>Claude Artifact Content Formatting
+                </h5>
+                <p class="mb-3">This Requirements page is designed to display content exactly like Claude Artifacts. You can:</p>
+                <ul class="ps-3">
+                    <li>Copy content from Claude Artifacts and paste it directly</li>
+                    <li>Use Markdown formatting: **bold**, *italic*, `code`, ### headers</li>
+                    <li>Include code blocks with ```language syntax</li>
+                    <li>Add bullet points with - or numbered lists with 1.</li>
+                    <li>Create tables, blockquotes (>) and horizontal rules (---)</li>
+                </ul>
+            </div>
+
+            <!-- Main Form -->
+            <div class="form-container">
+                <form method="post" id="requirement-form">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- Name Field -->
+                            <div class="mb-4">
+                                <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-tag me-1"></i>Requirement Name
+                                </label>
+                                {{ form.name|add_class:"form-control form-control-lg" }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Provide a clear, descriptive name for this requirement
+                                </div>
+                            </div>
+
+                            <!-- Content Field -->
+                            <div class="mb-4">
+                                <label for="{{ form.content.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-file-text me-1"></i>Content
+                                </label>
+                                <div class="textarea-container">
+                                    {{ form.content|add_class:"form-control" }}
+                                    <div class="resize-handle"></div>
+                                </div>
+                                <div class="character-count">
+                                    <span id="char-count">0</span> characters | <span id="word-count">0</span> words
+                                </div>
+                                {% if form.content.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.content.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Paste your Claude Artifact content here. Supports full Markdown formatting.
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-flex gap-3 pt-3 border-top">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    {% if form.instance.pk %}Update Requirement{% else %}Create Requirement{% endif %}
+                                </button>
+                                
+                                {% if form.instance.pk %}
+                                    <a href="{% url 'tracker:requirement_detail' form.instance.pk %}" class="btn btn-outline-secondary btn-lg">
+                                        <i class="bi bi-x-lg me-1"></i>Cancel
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'tracker:requirement_list' %}" class="btn btn-outline-secondary btn-lg">
+                                        <i class="bi bi-x-lg me-1"></i>Cancel
+                                    </a>
+                                {% endif %}
+                                
+                                <button type="button" class="btn btn-outline-info btn-lg" id="preview-btn">
+                                    <i class="bi bi-eye me-1"></i>Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Live Preview -->
+            <div class="card sticky-top" style="top: 1rem;">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eye me-2"></i>Live Preview
+                        <small class="ms-2 opacity-75">(Claude Artifact Style)</small>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="preview-area" id="content-preview">
+                        <div class="text-muted text-center">
+                            <i class="bi bi-eye-slash display-6"></i>
+                            <p class="mt-2">Start typing to see live preview...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Formatting Guide -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-1"></i>Quick Formatting Guide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <strong>Headers:</strong> # ## ###<br>
+                        <strong>Bold:</strong> **text**<br>
+                        <strong>Italic:</strong> *text*<br>
+                        <strong>Code:</strong> `code`<br>
+                        <strong>Lists:</strong> - item or 1. item<br>
+                        <strong>Code Block:</strong> ```language<br>
+                        <strong>Quote:</strong> > text<br>
+                        <strong>Line:</strong> ---
+                    </small>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-1"></i>Pro Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        • Copy/paste directly from Claude Artifacts<br>
+                        • Use the preview to check formatting<br>
+                        • Content auto-saves as you type<br>
+                        • Supports all standard Markdown syntax<br>
+                        • Tables and complex layouts supported
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contentTextarea = document.getElementById('{{ form.content.id_for_label }}');
+    const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+    const previewArea = document.getElementById('content-preview');
+    const charCount = document.getElementById('char-count');
+    const wordCount = document.getElementById('word-count');
+    const previewBtn = document.getElementById('preview-btn');
+
+    // Character and word counting
+    function updateCounts() {
+        const content = contentTextarea.value;
+        charCount.textContent = content.length.toLocaleString();
+        wordCount.textContent = content.trim() ? content.trim().split(/\s+/).length.toLocaleString() : '0';
+    }
+
+    // Markdown to HTML conversion (basic)
+    function markdownToHtml(markdown) {
+        if (!markdown.trim()) {
+            return '<div class="text-muted text-center"><i class="bi bi-eye-slash display-6"></i><p class="mt-2">Start typing to see live preview...</p></div>';
+        }
+
+        let html = markdown;
+        
+        // Convert headers
+        html = html.replace(/^### (.*$)/gm, '<h3 style="color: #34495e; font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;">$1</h3>');
+        html = html.replace(/^## (.*$)/gm, '<h2 style="color: #34495e; font-size: 1.5rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #bdc3c7; padding-bottom: 0.3rem;">$1</h2>');
+        html = html.replace(/^# (.*$)/gm, '<h1 style="color: #2c3e50; font-size: 2rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem;">$1</h1>');
+        
+        // Convert code blocks
+        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre style="background: #2c3e50; color: #ecf0f1; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0;"><code>$2</code></pre>');
+        
+        // Convert inline code
+        html = html.replace(/`([^`]+)`/g, '<code style="background: #f1c40f; color: #2c3e50; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">$1</code>');
+        
+        // Convert bold and italic
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #2c3e50; font-weight: 600;">$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em style="color: #7f8c8d; font-style: italic;">$1</em>');
+        
+        // Convert horizontal rules
+        html = html.replace(/^---$/gm, '<hr style="border: none; border-top: 2px solid #bdc3c7; margin: 2rem 0;">');
+        
+        // Convert blockquotes
+        html = html.replace(/^> (.*$)/gm, '<blockquote style="border-left: 4px solid #3498db; padding-left: 1rem; margin: 1rem 0; font-style: italic; color: #7f8c8d; background: #ecf0f1; padding: 1rem; border-radius: 0.25rem;">$1</blockquote>');
+        
+        // Convert line breaks
+        html = html.replace(/\n/g, '<br>');
+        
+        return html;
+    }
+
+    // Live preview update
+    function updatePreview() {
+        const markdown = contentTextarea.value;
+        const html = markdownToHtml(markdown);
+        previewArea.innerHTML = html;
+    }
+
+    // Event listeners
+    contentTextarea.addEventListener('input', function() {
+        updateCounts();
+        updatePreview();
+    });
+
+    nameInput.addEventListener('input', updateCounts);
+
+    previewBtn.addEventListener('click', function() {
+        updatePreview();
+        previewArea.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Auto-save functionality
+    let saveTimeout;
+    function autoSave() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            localStorage.setItem('requirement_draft_name', nameInput.value);
+            localStorage.setItem('requirement_draft_content', contentTextarea.value);
+        }, 1000);
+    }
+
+    contentTextarea.addEventListener('input', autoSave);
+    nameInput.addEventListener('input', autoSave);
+
+    // Load draft on page load
+    const draftName = localStorage.getItem('requirement_draft_name');
+    const draftContent = localStorage.getItem('requirement_draft_content');
+    
+    if (draftName && !nameInput.value) {
+        nameInput.value = draftName;
+    }
+    if (draftContent && !contentTextarea.value) {
+        contentTextarea.value = draftContent;
+    }
+
+    // Clear draft on form submit
+    document.getElementById('requirement-form').addEventListener('submit', function() {
+        localStorage.removeItem('requirement_draft_name');
+        localStorage.removeItem('requirement_draft_content');
+    });
+
+    // Initial counts and preview
+    updateCounts();
+    updatePreview();
+
+    // Textarea auto-resize
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(200, textarea.scrollHeight) + 'px';
+    }
+
+    contentTextarea.addEventListener('input', function() {
+        autoResize(this);
+    });
+
+    // Initial resize
+    autoResize(contentTextarea);
+});
+</script>
+{% endblock %}
