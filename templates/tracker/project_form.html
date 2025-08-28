@@ -1,53 +1,360 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}
 {% if object %}Edit Project{% else %}Create Project{% endif %} - FamilyHub Dev Tracker
 {% endblock %}
 
+{% block nav_projects %}active{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'tracker:project_list' %}">Projects</a></li>
+        <li class="breadcrumb-item active">{% if object %}Edit {{ object.name }}{% else %}Create Project{% endif %}</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">
-                        <i class="bi bi-collection me-2"></i>
-                        {% if object %}Edit Project: {{ object.name }}{% else %}Create New Project{% endif %}
-                    </h4>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white py-4">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-icon me-3">
+                        <i class="bi bi-collection fs-2"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1">
+                            {% if object %}
+                                Edit Project
+                            {% else %}
+                                Create New Project
+                            {% endif %}
+                        </h4>
+                        <p class="mb-0 opacity-75">
+                            {% if object %}
+                                Update project information and settings
+                            {% else %}
+                                Set up a new development project
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
-                
-                <div class="card-body">
-                    <form method="post" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Project Information Alert -->
+                <div class="alert alert-info border-0 mb-4">
+                    <div class="d-flex">
+                        <i class="bi bi-info-circle me-3 mt-1"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Project Setup</h6>
+                            <p class="mb-0 small">
+                                Projects are containers for related applications. Define the overall scope, timeline, and team ownership here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" class="needs-validation" novalidate id="projectForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="bi bi-info-circle me-2"></i>Basic Information
+                        </h5>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.name.id_for_label }}" class="form-label">Project Name</label>
-                                {{ form.name }}
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">
+                                    Project Name <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-collection"></i></span>
+                                    {{ form.name }}
+                                </div>
                                 {% if form.name.errors %}
                                     <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
                                 {% endif %}
+                                <div class="form-text">Choose a descriptive name for your project</div>
                             </div>
                             
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
-                                {{ form.status }}
-                                {% if form.status.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.owner.id_for_label }}" class="form-label fw-semibold">
+                                    Project Owner <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    {{ form.owner }}
+                                </div>
+                                {% if form.owner.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.owner.errors.0 }}</div>
                                 {% endif %}
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">
+                                Project Description <span class="text-danger">*</span>
+                            </label>
                             {{ form.description }}
                             {% if form.description.errors %}
                                 <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
                             {% endif %}
+                            <div class="form-text">Describe the project goals, scope, and expected outcomes</div>
                         </div>
-                        
+                    </div>
+
+                    <!-- Project Timeline -->
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="bi bi-calendar-range me-2"></i>Timeline & Status
+                        </h5>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-semibold">
+                                    Current Status <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-flag"></i></span>
+                                    {{ form.status }}
+                                </div>
+                                {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label fw-semibold">
+                                    Start Date <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                                    {{ form.start_date }}
+                                </div>
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.start_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.target_date.id_for_label }}" class="form-label fw-semibold">
+                                    Target Completion <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-x"></i></span>
+                                    {{ form.target_date }}
+                                </div>
+                                {% if form.target_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.target_date.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Expected project completion date</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Indicator for Edit Mode -->
+                    {% if object %}
+                    <div class="form-section mb-4">
+                        <h5 class="section-title">
+                            <i class="bi bi-graph-up me-2"></i>Project Progress
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h3 class="text-primary mb-0">{{ object.applications.count }}</h3>
+                                    <small class="text-muted">Applications</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h3 class="text-success mb-0">{{ object.completion_percentage|floatformat:0 }}%</h3>
+                                    <small class="text-muted">Complete</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h3 class="text-info mb-0">{{ object.total_tasks }}</h3>
+                                    <small class="text-muted">Total Tasks</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="{% url 'tracker:project_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Cancel
+                        </a>
+                        
+                        <div class="btn-group">
+                            {% if object %}
+                                <button type="submit" name="action" value="save" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                                    <span class="loading-spinner spinner-border spinner-border-sm ms-2"></span>
+                                </button>
+                                <button type="submit" name="action" value="save_continue" class="btn btn-outline-primary">
+                                    <i class="bi bi-check2-all me-1"></i>Save & Continue Editing
+                                </button>
+                            {% else %}
+                                <button type="submit" name="action" value="save" class="btn btn-success">
+                                    <i class="bi bi-plus-circle me-1"></i>Create Project
+                                    <span class="loading-spinner spinner-border spinner-border-sm ms-2"></span>
+                                </button>
+                                <button type="submit" name="action" value="save_add_app" class="btn btn-outline-success">
+                                    <i class="bi bi-grid-3x3-gap me-1"></i>Create & Add Application
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help Card -->
+        <div class="card mt-4 border-0 bg-light">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-question-circle me-2"></i>Need Help?
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="small text-muted">Project Status Options:</h6>
+                        <ul class="small mb-0">
+                            <li><strong>Planning:</strong> Project is being planned</li>
+                            <li><strong>Active:</strong> Development in progress</li>
+                            <li><strong>Testing:</strong> In testing phase</li>
+                            <li><strong>Completed:</strong> Project finished</li>
+                            <li><strong>On Hold:</strong> Temporarily paused</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="small text-muted">Tips:</h6>
+                        <ul class="small mb-0">
+                            <li>Use descriptive project names</li>
+                            <li>Set realistic target dates</li>
+                            <li>Update status regularly</li>
+                            <li>Include all stakeholders in description</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-section {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+}
+
+.section-title {
+    color: #0d6efd;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.avatar-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.card {
+    border-radius: 15px;
+}
+
+.btn-group .btn {
+    border-radius: 8px;
+}
+
+.btn-group .btn:not(:last-child) {
+    margin-right: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('projectForm');
+    const submitButtons = form.querySelectorAll('button[type="submit"]');
+    
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Get the clicked button
+        const clickedButton = event.submitter;
+        
+        if (form.checkValidity()) {
+            // Show loading state
+            submitButtons.forEach(btn => showLoading(btn));
+            
+            // Submit the form
+            form.submit();
+        } else {
+            // Show validation errors
+            form.classList.add('was-validated');
+        }
+    });
+    
+    // Date validation
+    const startDate = document.getElementById('{{ form.start_date.id_for_label }}');
+    const targetDate = document.getElementById('{{ form.target_date.id_for_label }}');
+    
+    function validateDates() {
+        if (startDate.value && targetDate.value) {
+            if (new Date(targetDate.value) <= new Date(startDate.value)) {
+                targetDate.setCustomValidity('Target date must be after start date');
+            } else {
+                targetDate.setCustomValidity('');
+            }
+        }
+    }
+    
+    startDate.addEventListener('change', validateDates);
+    targetDate.addEventListener('change', validateDates);
+    
+    // Auto-resize textarea
+    const textarea = form.querySelector('textarea');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+});
+</script>
+{% endblock %}
                                 <label for="{{ form.start_date.id_for_label }}" class="form-label">Start Date</label>
                                 {{ form.start_date }}
                                 {% if form.start_date.errors %}

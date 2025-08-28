@@ -901,3 +901,25 @@ class DecisionUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, f'Decision "{form.instance.title}" updated successfully!')
         return super().form_valid(form)
+
+
+@login_required
+def api_stats(request):
+    """API endpoint for footer statistics."""
+    try:
+        stats = {
+            'projects': Project.objects.count(),
+            'applications': Application.objects.count(),
+            'tasks': Task.objects.count(),
+            'completion_rate': 0,
+        }
+        
+        # Calculate overall completion rate
+        total_tasks = Task.objects.count()
+        if total_tasks > 0:
+            completed_tasks = Task.objects.filter(status='completed').count()
+            stats['completion_rate'] = round((completed_tasks / total_tasks) * 100, 1)
+        
+        return JsonResponse(stats)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

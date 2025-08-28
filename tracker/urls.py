@@ -48,4 +48,5 @@ urlpatterns = [
     # Search and API URLs
     path('search/', views.search_view, name='search'),
     path('api/chart-data/', views.api_chart_data, name='api_chart_data'),
+    path('api/stats/', views.api_stats, name='api_stats'),
 ]

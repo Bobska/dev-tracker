@@ -2,294 +2,779 @@
 
 {% block title %}{{ project.name }} - Project Details{% endblock %}
 
+{% block nav_projects %}active{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'tracker:project_list' %}">Projects</a></li>
+        <li class="breadcrumb-item active">{{ project.name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-md-8">
+<!-- Project Header -->
+<div class="project-header border-bottom pb-4 mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
             <div class="d-flex align-items-center mb-2">
-                <a href="{% url 'tracker:project_list' %}" class="btn btn-outline-secondary me-3">
-                    <i class="bi bi-arrow-left"></i> Back to Projects
-                </a>
-                <h1 class="display-6 fw-bold mb-0">{{ project.name }}</h1>
-                <span class="badge bg-{% if project.status == 'completed' %}success{% elif project.status == 'development' %}warning{% elif project.status == 'testing' %}info{% else %}secondary{% endif %} ms-3">
-                    {{ project.get_status_display }}
-                </span>
-            </div>
-            <p class="lead text-muted">{{ project.description }}</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <div class="btn-group" role="group">
-                <a href="{% url 'tracker:project_update' project.pk %}" class="btn btn-primary">
-                    <i class="bi bi-pencil me-1"></i>Edit Project
-                </a>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                        Actions
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'tracker:application_create' %}?project={{ project.pk }}">
-                            <i class="bi bi-plus-circle me-1"></i>Add Application
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'tracker:task_create' %}">
-                            <i class="bi bi-check2-square me-1"></i>Add Task
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete()">
-                            <i class="bi bi-trash me-1"></i>Delete Project
-                        </a></li>
-                    </ul>
+                <div class="project-icon me-3">
+                    <i class="bi bi-collection fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h2 mb-1">{{ project.name }}</h1>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge status-{{ project.status }} px-3 py-2">
+                            <i class="bi bi-flag me-1"></i>{{ project.get_status_display }}
+                        </span>
+                        {% if project.is_overdue %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                            </span>
+                        {% endif %}
+                        <span class="text-muted">
+                            <i class="bi bi-person me-1"></i>{{ project.owner.get_full_name|default:project.owner.username }}
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Project Overview -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="bi bi-grid-3x3-gap display-4 text-primary"></i>
-                    <h4 class="mt-2">{{ project.applications.count }}</h4>
-                    <p class="text-muted mb-0">Applications</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="bi bi-check2-square display-4 text-success"></i>
-                    <h4 class="mt-2">{{ project.total_tasks }}</h4>
-                    <p class="text-muted mb-0">Total Tasks</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="bi bi-diagram-3 display-4 text-warning"></i>
-                    <h4 class="mt-2">{{ project.total_integrations }}</h4>
-                    <p class="text-muted mb-0">Integrations</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="bi bi-percent display-4 text-info"></i>
-                    <h4 class="mt-2">{{ project.completion_percentage|floatformat:0 }}%</h4>
-                    <p class="text-muted mb-0">Complete</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Project Details -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Project Information</h5>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-3">Owner:</dt>
-                        <dd class="col-sm-9">{{ project.owner.get_full_name|default:project.owner.username }}</dd>
-                        
-                        <dt class="col-sm-3">Start Date:</dt>
-                        <dd class="col-sm-9">{{ project.start_date|date:"F d, Y" }}</dd>
-                        
-                        <dt class="col-sm-3">Target Date:</dt>
-                        <dd class="col-sm-9">
-                            {{ project.target_date|date:"F d, Y" }}
-                            {% if project.target_date < today and project.status != 'completed' %}
-                                <span class="badge bg-danger ms-2">Overdue</span>
-                            {% endif %}
-                        </dd>
-                        
-                        <dt class="col-sm-3">Created:</dt>
-                        <dd class="col-sm-9">{{ project.created_at|date:"F d, Y" }} at {{ project.created_at|time:"H:i" }}</dd>
-                        
-                        <dt class="col-sm-3">Last Updated:</dt>
-                        <dd class="col-sm-9">{{ project.updated_at|date:"F d, Y" }} at {{ project.updated_at|time:"H:i" }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Progress Overview</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted">Overall Progress</span>
-                            <span class="fw-semibold">{{ project.completion_percentage|floatformat:1 }}%</span>
-                        </div>
-                        <div class="progress mb-3">
-                            <div class="progress-bar bg-primary" style="width: {{ project.completion_percentage }}%"></div>
+            <p class="text-muted mb-3 fs-6">{{ project.description }}</p>
+            
+            <!-- Quick Stats -->
+            <div class="row g-3">
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-range text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted d-block">Timeline</small>
+                            <span class="fw-semibold">{{ project.start_date|date:"M d" }} - {{ project.target_date|date:"M d, Y" }}</span>
                         </div>
                     </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-graph-up text-success me-2"></i>
+                        <div>
+                            <small class="text-muted d-block">Progress</small>
+                            <span class="fw-semibold">{{ project.completion_percentage|floatformat:0 }}% Complete</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-clock text-warning me-2"></i>
+                        <div>
+                            <small class="text-muted d-block">Time Remaining</small>
+                            <span class="fw-semibold {% if project.is_overdue %}text-danger{% endif %}">
+                                {% if project.days_remaining > 0 %}
+                                    {{ project.days_remaining }} days
+                                {% elif project.days_remaining == 0 %}
+                                    Due today
+                                {% else %}
+                                    {{ project.days_remaining|add:"0"|floatformat:"0"|mul:"-1" }} days overdue
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2">
+            <a href="{% url 'tracker:project_update' project.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>Edit Project
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'tracker:application_create' %}?project={{ project.pk }}">
+                        <i class="bi bi-plus-circle me-2"></i>Add Application
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'tracker:task_create' %}?project={{ project.pk }}">
+                        <i class="bi bi-check2-square me-2"></i>Add Task
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'tracker:artifact_create' %}?project={{ project.pk }}">
+                        <i class="bi bi-file-earmark me-2"></i>Add Artifact
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'tracker:decision_create' %}?project={{ project.pk }}">
+                        <i class="bi bi-lightbulb me-2"></i>Log Decision
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete()">
+                        <i class="bi bi-trash me-2"></i>Delete Project
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="metric-card">
+            <div class="metric-icon bg-primary">
+                <i class="bi bi-grid-3x3-gap"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-value">{{ project.applications.count }}</h3>
+                <p class="metric-label">Applications</p>
+                <small class="metric-change text-muted">
+                    {% if project.applications.count > 0 %}
+                        {{ project.applications.filter(status='production').count }} in production
+                    {% else %}
+                        No applications yet
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="metric-card">
+            <div class="metric-icon bg-success">
+                <i class="bi bi-check2-square"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-value">{{ project.total_tasks }}</h3>
+                <p class="metric-label">Total Tasks</p>
+                <small class="metric-change text-success">
+                    {{ project.completed_tasks }} completed
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="metric-card">
+            <div class="metric-icon bg-warning">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-value">{{ project.total_integrations }}</h3>
+                <p class="metric-label">Integrations</p>
+                <small class="metric-change text-muted">
+                    Cross-app connections
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="metric-card">
+            <div class="metric-icon bg-info">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="metric-content">
+                <h3 class="metric-value">{{ project.team_members.count }}</h3>
+                <p class="metric-label">Team Members</p>
+                <small class="metric-change text-muted">
+                    Active contributors
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pb-0">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up me-2"></i>Project Progress
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Overall Progress -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold">Overall Completion</span>
+                        <span class="badge bg-primary px-3 py-2">{{ project.completion_percentage|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-gradient" role="progressbar" 
+                             style="width: {{ project.completion_percentage }}%"
+                             aria-valuenow="{{ project.completion_percentage }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Applications Progress -->
+                {% if project.applications.exists %}
+                    <h6 class="text-muted mb-3">Applications Progress</h6>
+                    {% for app in project.applications.all %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="d-flex align-items-center">
+                                    <a href="{% url 'tracker:application_detail' app.pk %}" class="text-decoration-none fw-semibold">
+                                        {{ app.name }}
+                                    </a>
+                                    <span class="badge status-{{ app.status }} ms-2">{{ app.get_status_display }}</span>
+                                </div>
+                                <span class="small">{{ app.progress|default:0 }}%</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar" style="width: {{ app.progress|default:0 }}%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pb-0">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle me-2"></i>Project Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 small text-muted">Owner:</dt>
+                    <dd class="col-7 small">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-xs bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                {{ project.owner.first_name.0|default:project.owner.username.0|upper }}
+                            </div>
+                            {{ project.owner.get_full_name|default:project.owner.username }}
+                        </div>
+                    </dd>
                     
-                    <div class="mb-2">
-                        <small class="text-muted">Days Remaining:</small>
-                        <span class="fw-semibold">
-                            {% if project.days_remaining > 0 %}
-                                {{ project.days_remaining }} days
-                            {% elif project.days_remaining == 0 %}
-                                Due today
-                            {% else %}
-                                {{ project.days_remaining|add:"0"|floatformat:"0" }} days overdue
+                    <dt class="col-5 small text-muted">Start Date:</dt>
+                    <dd class="col-7 small">{{ project.start_date|date:"M d, Y" }}</dd>
+                    
+                    <dt class="col-5 small text-muted">Target Date:</dt>
+                    <dd class="col-7 small">
+                        <span class="{% if project.is_overdue %}text-danger{% endif %}">
+                            {{ project.target_date|date:"M d, Y" }}
+                        </span>
+                    </dd>
+                    
+                    <dt class="col-5 small text-muted">Duration:</dt>
+                    <dd class="col-7 small">{{ project.duration_days }} days</dd>
+                    
+                    <dt class="col-5 small text-muted">Created:</dt>
+                    <dd class="col-7 small">{{ project.created_at|date:"M d, Y" }}</dd>
+                    
+                    <dt class="col-5 small text-muted">Last Updated:</dt>
+                    <dd class="col-7 small">{{ project.updated_at|timesince }} ago</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Applications Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-grid-3x3-gap me-2"></i>Applications ({{ project.applications.count }})
+            </h5>
+            <a href="{% url 'tracker:application_create' %}?project={{ project.pk }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Add Application
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if project.applications.exists %}
+            <div class="row g-3">
+                {% for app in project.applications.all %}
+                    <div class="col-lg-6 col-xl-4">
+                        <div class="app-card">
+                            <div class="app-status status-{{ app.status }}"></div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="app-title">
+                                    <a href="{% url 'tracker:application_detail' app.pk %}" class="text-decoration-none">
+                                        {{ app.name }}
+                                    </a>
+                                </h6>
+                                <span class="badge status-{{ app.status }} small">
+                                    {{ app.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <p class="app-description">{{ app.description|truncatewords:12 }}</p>
+                            
+                            <div class="app-stats">
+                                <div class="row g-2 text-center">
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <div class="stat-value">{{ app.tasks.count }}</div>
+                                            <div class="stat-label">Tasks</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <div class="stat-value">{{ app.artifacts.count }}</div>
+                                            <div class="stat-label">Files</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <div class="stat-value">{{ app.progress|default:0 }}%</div>
+                                            <div class="stat-label">Done</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Features List -->
+                            {% if app.features %}
+                                <div class="app-features">
+                                    <small class="text-muted">Key Features:</small>
+                                    <div class="feature-tags">
+                                        {% for feature in app.features|slice:":3" %}
+                                            <span class="feature-tag">{{ feature }}</span>
+                                        {% endfor %}
+                                        {% if app.features|length > 3 %}
+                                            <span class="feature-tag text-muted">+{{ app.features|length|add:"-3" }} more</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </div>
+                <h6>No Applications Yet</h6>
+                <p class="text-muted mb-3">Add your first application to get started with development tracking.</p>
+                <a href="{% url 'tracker:application_create' %}?project={{ project.pk }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Add First Application
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Activity & Tasks -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Recent Activity
+                    </h5>
+                    <a href="{% url 'tracker:task_list' %}?project={{ project.pk }}" class="btn btn-outline-primary btn-sm">
+                        View All Tasks
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if recent_tasks %}
+                    <div class="activity-timeline">
+                        {% for task in recent_tasks %}
+                            <div class="activity-item">
+                                <div class="activity-icon status-{{ task.status }}">
+                                    <i class="bi bi-check2-square"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="activity-title">
+                                                <a href="{% url 'tracker:task_detail' task.pk %}" class="text-decoration-none">
+                                                    {{ task.title }}
+                                                </a>
+                                            </h6>
+                                            <p class="activity-description">
+                                                in <strong>{{ task.application.name }}</strong>
+                                                {% if task.assigned_to %}
+                                                    • assigned to {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge status-{{ task.status }}">{{ task.get_status_display }}</span>
+                                            {% if task.priority == 'high' %}
+                                                <span class="badge bg-danger ms-1">High Priority</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <span class="text-muted">{{ task.updated_at|timesince }} ago</span>
+                                        {% if task.due_date %}
+                                            <span class="text-muted"> • Due {{ task.due_date|date:"M d" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h6>No Recent Activity</h6>
+                        <p class="text-muted">Activity will appear here as tasks are created and updated.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Attention Needed
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Overdue Tasks -->
+                {% if overdue_tasks %}
+                    <div class="alert alert-danger border-0 mb-3">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue Tasks
+                        </h6>
+                        {% for task in overdue_tasks|slice:":3" %}
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <a href="{% url 'tracker:task_detail' task.pk %}" class="text-decoration-none text-dark">
+                                    {{ task.title|truncatewords:4 }}
+                                </a>
+                                <small class="text-danger">{{ task.due_date|timesince }} overdue</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Upcoming Deadlines -->
+                {% if upcoming_tasks %}
+                    <div class="alert alert-warning border-0 mb-3">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-clock me-1"></i>Due Soon
+                        </h6>
+                        {% for task in upcoming_tasks|slice:":3" %}
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <a href="{% url 'tracker:task_detail' task.pk %}" class="text-decoration-none text-dark">
+                                    {{ task.title|truncatewords:4 }}
+                                </a>
+                                <small class="text-warning">Due {{ task.due_date|timeuntil }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Project Health -->
+                <div class="health-indicators">
+                    <h6 class="text-muted mb-2">Project Health</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small">On Schedule</span>
+                        <span class="badge {% if not project.is_overdue %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if not project.is_overdue %}Yes{% else %}No{% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small">Task Completion Rate</span>
+                        <span class="badge bg-info">{{ project.task_completion_rate|floatformat:0 }}%</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="small">Team Productivity</span>
+                        <span class="badge bg-primary">
+                            {% if project.team_productivity == 'high' %}High
+                            {% elif project.team_productivity == 'medium' %}Medium
+                            {% else %}Low{% endif %}
                         </span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Applications in Project -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Applications ({{ project.applications.count }})</h5>
-                    <a href="{% url 'tracker:application_create' %}?project={{ project.pk }}" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i>Add Application
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if project.applications.exists %}
-                        <div class="row">
-                            {% for app in project.applications.all %}
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <h6 class="card-title">
-                                                    <a href="{% url 'tracker:application_detail' app.pk %}">{{ app.name }}</a>
-                                                </h6>
-                                                <span class="badge bg-{% if app.status == 'production' %}success{% elif app.status == 'development' %}warning{% else %}secondary{% endif %}">
-                                                    {{ app.get_status_display }}
-                                                </span>
-                                            </div>
-                                            <p class="card-text small text-muted">{{ app.description|truncatechars:80 }}</p>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <small class="text-muted">
-                                                    {{ app.tasks.count }} task{{ app.tasks.count|pluralize }}
-                                                </small>
-                                                {% if app.progress %}
-                                                    <span class="badge bg-light text-dark">{{ app.progress }}%</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi bi-grid-3x3-gap display-1 text-muted"></i>
-                            <h5 class="mt-3">No Applications Yet</h5>
-                            <p class="text-muted">Add your first application to get started.</p>
-                            <a href="{% url 'tracker:application_create' %}?project={{ project.pk }}" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-1"></i>Add Application
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Tasks -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Tasks</h5>
-                    <a href="{% url 'tracker:task_list' %}?project={{ project.pk }}" class="btn btn-sm btn-outline-primary">
-                        View All Tasks
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if recent_tasks %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Task</th>
-                                        <th>Application</th>
-                                        <th>Status</th>
-                                        <th>Priority</th>
-                                        <th>Due Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for task in recent_tasks %}
-                                        <tr>
-                                            <td>
-                                                <a href="{% url 'tracker:task_detail' task.pk %}">{{ task.title }}</a>
-                                            </td>
-                                            <td>{{ task.application.name }}</td>
-                                            <td>
-                                                <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in-progress' %}warning{% else %}secondary{% endif %}">
-                                                    {{ task.get_status_display }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}success{% endif %}">
-                                                    {{ task.get_priority_display }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {% if task.due_date %}
-                                                    {{ task.due_date|date:"M d, Y" }}
-                                                {% else %}
-                                                    <span class="text-muted">No due date</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi bi-check2-square display-1 text-muted"></i>
-                            <h5 class="mt-3">No Tasks Yet</h5>
-                            <p class="text-muted">Tasks will appear here once they are created.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
+<style>
+.project-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: -1rem -1rem 2rem -1rem;
+}
+
+.project-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2c3e50;
+}
+
+.metric-label {
+    margin: 0;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.metric-change {
+    font-size: 0.875rem;
+}
+
+.app-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.app-status {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 12px 12px 0 0;
+}
+
+.app-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.app-description {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.app-stats {
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f8f9fa;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.app-features {
+    padding-top: 1rem;
+    border-top: 1px solid #f8f9fa;
+}
+
+.feature-tags {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.feature-tag {
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.activity-timeline {
+    position: relative;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    position: relative;
+}
+
+.activity-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 36px;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex-grow: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.activity-description {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.activity-meta {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon i {
+    font-size: 3rem;
+    color: #dee2e6;
+}
+
+.health-indicators {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.avatar-xs {
+    width: 20px;
+    height: 20px;
+    font-size: 0.625rem;
+}
+
+/* Status Colors */
+.status-planning { background: #6c757d; }
+.status-active { background: #0d6efd; }
+.status-testing { background: #fd7e14; }
+.status-completed { background: #198754; }
+.status-on_hold { background: #dc3545; }
+.status-production { background: #198754; }
+.status-development { background: #0d6efd; }
+
+.badge.status-planning { background: #6c757d; }
+.badge.status-active { background: #0d6efd; }
+.badge.status-testing { background: #fd7e14; }
+.badge.status-completed { background: #198754; }
+.badge.status-on_hold { background: #dc3545; }
+.badge.status-production { background: #198754; }
+.badge.status-development { background: #0d6efd; }
+
+@media (max-width: 768px) {
+    .project-header {
+        margin: -1rem -1rem 1rem -1rem;
+        padding: 1.5rem;
+    }
+    
+    .project-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .metric-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 function confirmDelete() {
-    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-        // Add delete logic here
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone and will remove all associated applications, tasks, and artifacts.')) {
+        // Add delete logic here - typically would be a form submission or AJAX call
         window.location.href = "{% url 'tracker:project_list' %}";
     }
 }
+
+// Smooth scrolling for internal links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
 </script>
-
-<style>
-.progress {
-    height: 8px;
-}
-
-.card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.2s ease-in-out;
-}
-
-.display-1 {
-    opacity: 0.5;
-}
-</style>
 {% endblock %}

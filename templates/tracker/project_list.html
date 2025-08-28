@@ -2,140 +2,490 @@
 
 {% block title %}Projects - FamilyHub Dev Tracker{% endblock %}
 
+{% block nav_projects %}active{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Projects</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="display-6 fw-bold">
-                <i class="bi bi-collection me-2 text-primary"></i>
-                Projects
-            </h1>
-            <p class="lead text-muted">Manage your development projects</p>
-        </div>
-        <div class="col-md-4 text-md-end">
-            <a href="{% url 'tracker:project_create' %}" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle me-2"></i>
-                New Project
-            </a>
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-collection me-2"></i>Projects
+        </h1>
+        <p class="text-muted mb-0">Manage and track your development projects</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" id="filterToggle">
+            <i class="bi bi-funnel me-1"></i>Filter
+        </button>
+        <button class="btn btn-outline-secondary" id="viewToggle" data-view="grid">
+            <i class="bi bi-list me-1"></i>List View
+        </button>
+        <a href="{% url 'tracker:project_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>New Project
+        </a>
+    </div>
+</div>
+
+<!-- Filters Panel -->
+<div class="collapse" id="filtersPanel">
+    <div class="card border-0 bg-light mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label small">Status</label>
+                    <select class="form-select form-select-sm" name="status" id="status">
+                        <option value="">All Statuses</option>
+                        <option value="planning" {% if request.GET.status == 'planning' %}selected{% endif %}>Planning</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="testing" {% if request.GET.status == 'testing' %}selected{% endif %}>Testing</option>
+                        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="on_hold" {% if request.GET.status == 'on_hold' %}selected{% endif %}>On Hold</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="owner" class="form-label small">Owner</label>
+                    <select class="form-select form-select-sm" name="owner" id="owner">
+                        <option value="">All Owners</option>
+                        {% for owner in owners %}
+                            <option value="{{ owner.id }}" {% if request.GET.owner == owner.id|stringformat:"s" %}selected{% endif %}>
+                                {{ owner.get_full_name|default:owner.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="sort" class="form-label small">Sort By</label>
+                    <select class="form-select form-select-sm" name="sort" id="sort">
+                        <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest</option>
+                        <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest</option>
+                        <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                        <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>Name Z-A</option>
+                        <option value="target_date" {% if request.GET.sort == 'target_date' %}selected{% endif %}>Due Date</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label small">Search</label>
+                    <input type="text" class="form-control form-control-sm" name="search" id="search" 
+                           value="{{ request.GET.search }}" placeholder="Search projects...">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Projects List -->
+<!-- Projects Grid View -->
+<div id="gridView" class="projects-grid">
     {% if projects %}
-        <div class="row">
+        <div class="row g-4">
             {% for project in projects %}
-                <div class="col-lg-6 col-xl-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">
-                                <a href="{{ project.get_absolute_url }}" class="text-decoration-none">
-                                    {{ project.name }}
-                                </a>
-                            </h5>
-                            <span class="badge status-{{ project.status }}">
-                                {{ project.get_status_display }}
-                            </span>
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card project-card h-100 border-0 shadow-sm">
+                        <!-- Status Strip -->
+                        <div class="status-strip status-{{ project.status }}"></div>
+                        
+                        <div class="card-header border-0 bg-transparent pb-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-1">
+                                        <a href="{{ project.get_absolute_url }}" class="text-decoration-none text-dark">
+                                            {{ project.name }}
+                                        </a>
+                                    </h5>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge status-{{ project.status }} small">
+                                            {{ project.get_status_display }}
+                                        </span>
+                                        {% if project.is_overdue %}
+                                            <span class="badge bg-danger small">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Overdue
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-muted" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{{ project.get_absolute_url }}">
+                                            <i class="bi bi-eye me-2"></i>View Details
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'tracker:project_update' project.pk %}">
+                                            <i class="bi bi-pencil me-2"></i>Edit Project
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{% url 'tracker:application_create' %}?project={{ project.pk }}">
+                                            <i class="bi bi-plus me-2"></i>Add Application
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="card-body">
-                            <p class="card-text">
+                        <div class="card-body pt-0">
+                            <p class="card-text text-muted small mb-3">
                                 {% if project.description %}
-                                    {{ project.description|truncatewords:15 }}
+                                    {{ project.description|truncatewords:20 }}
                                 {% else %}
-                                    <em class="text-muted">No description provided</em>
+                                    <em>No description provided</em>
                                 {% endif %}
                             </p>
                             
-                            <div class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-people me-1"></i>
-                                    {{ project.team_members.count }} team member{{ project.team_members.count|pluralize }}
-                                </small>
+                            <!-- Project Stats -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-primary">{{ project.applications.count }}</div>
+                                        <small class="text-muted">Apps</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-success">{{ project.total_tasks }}</div>
+                                        <small class="text-muted">Tasks</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-info">{{ project.team_members.count }}</div>
+                                        <small class="text-muted">Team</small>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <div class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-app-indicator me-1"></i>
-                                    {{ project.applications.count }} application{{ project.applications.count|pluralize }}
-                                </small>
-                            </div>
-                            
+                            <!-- Progress -->
                             <div class="mb-3">
-                                <label class="form-label small text-muted">Progress</label>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" role="progressbar" 
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted">Progress</span>
+                                    <span class="small fw-semibold">{{ project.completion_percentage|floatformat:0 }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" 
                                          style="width: {{ project.completion_percentage }}%"
                                          aria-valuenow="{{ project.completion_percentage }}" 
                                          aria-valuemin="0" aria-valuemax="100">
                                     </div>
                                 </div>
-                                <small class="text-muted">{{ project.completion_percentage }}% complete</small>
+                            </div>
+                            
+                            <!-- Timeline -->
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>
+                                    <i class="bi bi-calendar-check me-1"></i>
+                                    {{ project.start_date|date:"M d" }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-calendar-x me-1"></i>
+                                    {{ project.target_date|date:"M d, Y" }}
+                                </span>
                             </div>
                         </div>
                         
-                        <div class="card-footer bg-light">
+                        <div class="card-footer border-0 bg-transparent">
                             <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    Created {{ project.created_at|date:"M d, Y" }}
-                                </small>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ project.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{% url 'tracker:project_update' project.pk %}" class="btn btn-outline-secondary btn-sm">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        {{ project.owner.first_name.0|default:project.owner.username.0|upper }}
+                                    </div>
+                                    <small class="text-muted">{{ project.owner.get_full_name|default:project.owner.username }}</small>
                                 </div>
+                                <small class="text-muted">{{ project.created_at|timesince }} ago</small>
                             </div>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
-
-        <!-- Pagination -->
-        {% if is_paginated %}
-            <nav aria-label="Projects pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1">First</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-                        </li>
-                    {% endif %}
-
-                    <li class="page-item active">
-                        <span class="page-link">
-                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                        </span>
-                    </li>
-
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
-
     {% else %}
         <!-- Empty State -->
         <div class="text-center py-5">
-            <i class="bi bi-collection text-muted" style="font-size: 4rem;"></i>
-            <h3 class="mt-3 text-muted">No Projects Yet</h3>
-            <p class="text-muted mb-4">Create your first project to start tracking development progress.</p>
-            <a href="{% url 'tracker:project_create' %}" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle me-2"></i>
-                Create Your First Project
-            </a>
+            <div class="empty-state-icon mb-3">
+                <i class="bi bi-collection"></i>
+            </div>
+            <h3 class="text-muted mb-2">No Projects Found</h3>
+            <p class="text-muted mb-4">
+                {% if request.GET.search or request.GET.status or request.GET.owner %}
+                    Try adjusting your filters to see more results.
+                {% else %}
+                    Create your first project to start tracking development progress.
+                {% endif %}
+            </p>
+            {% if not request.GET.search and not request.GET.status and not request.GET.owner %}
+                <a href="{% url 'tracker:project_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Create Your First Project
+                </a>
+            {% else %}
+                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                    <i class="bi bi-x-circle me-1"></i>Clear Filters
+                </button>
+            {% endif %}
         </div>
     {% endif %}
 </div>
+
+<!-- Projects List View -->
+<div id="listView" class="projects-list d-none">
+    {% if projects %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Project</th>
+                            <th>Status</th>
+                            <th>Owner</th>
+                            <th>Progress</th>
+                            <th>Apps</th>
+                            <th>Target Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="status-indicator status-{{ project.status }} me-3"></div>
+                                        <div>
+                                            <h6 class="mb-0">
+                                                <a href="{{ project.get_absolute_url }}" class="text-decoration-none">
+                                                    {{ project.name }}
+                                                </a>
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ project.description|truncatewords:8|default:"No description" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge status-{{ project.status }}">
+                                        {{ project.get_status_display }}
+                                    </span>
+                                    {% if project.is_overdue %}
+                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-xs bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            {{ project.owner.first_name.0|default:project.owner.username.0|upper }}
+                                        </div>
+                                        <small>{{ project.owner.get_full_name|default:project.owner.username }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 60px; height: 6px;">
+                                            <div class="progress-bar bg-primary" style="width: {{ project.completion_percentage }}%"></div>
+                                        </div>
+                                        <small>{{ project.completion_percentage|floatformat:0 }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ project.applications.count }}</span>
+                                </td>
+                                <td>
+                                    <small class="{% if project.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                                        {{ project.target_date|date:"M d, Y" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ project.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'tracker:project_update' project.pk %}" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <nav aria-label="Projects pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+
+<style>
+.project-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.project-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.status-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--bs-primary);
+}
+
+.status-strip.status-planning { background: #6c757d; }
+.status-strip.status-active { background: #0d6efd; }
+.status-strip.status-testing { background: #fd7e14; }
+.status-strip.status-completed { background: #198754; }
+.status-strip.status-on_hold { background: #dc3545; }
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-indicator.status-planning { background: #6c757d; }
+.status-indicator.status-active { background: #0d6efd; }
+.status-indicator.status-testing { background: #fd7e14; }
+.status-indicator.status-completed { background: #198754; }
+.status-indicator.status-on_hold { background: #dc3545; }
+
+.badge.status-planning { background: #6c757d; }
+.badge.status-active { background: #0d6efd; }
+.badge.status-testing { background: #fd7e14; }
+.badge.status-completed { background: #198754; }
+.badge.status-on_hold { background: #dc3545; }
+
+.avatar-sm {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+}
+
+.avatar-xs {
+    width: 20px;
+    height: 20px;
+    font-size: 0.625rem;
+}
+
+.empty-state-icon i {
+    font-size: 4rem;
+    color: var(--bs-gray-400);
+}
+
+@media (max-width: 768px) {
+    .projects-grid .col-lg-6 {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View Toggle
+    const viewToggle = document.getElementById('viewToggle');
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    
+    viewToggle.addEventListener('click', function() {
+        const currentView = this.dataset.view;
+        
+        if (currentView === 'grid') {
+            // Switch to list view
+            gridView.classList.add('d-none');
+            listView.classList.remove('d-none');
+            this.dataset.view = 'list';
+            this.innerHTML = '<i class="bi bi-grid me-1"></i>Grid View';
+        } else {
+            // Switch to grid view
+            listView.classList.add('d-none');
+            gridView.classList.remove('d-none');
+            this.dataset.view = 'grid';
+            this.innerHTML = '<i class="bi bi-list me-1"></i>List View';
+        }
+    });
+    
+    // Filter Toggle
+    const filterToggle = document.getElementById('filterToggle');
+    const filtersPanel = document.getElementById('filtersPanel');
+    
+    filterToggle.addEventListener('click', function() {
+        const bsCollapse = new bootstrap.Collapse(filtersPanel);
+        bsCollapse.toggle();
+    });
+    
+    // Auto-submit filters
+    const filterForm = document.getElementById('filterForm');
+    const filterInputs = filterForm.querySelectorAll('select, input');
+    
+    filterInputs.forEach(input => {
+        if (input.type === 'text') {
+            // Debounce text input
+            let timeout;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    filterForm.submit();
+                }, 500);
+            });
+        } else {
+            // Immediate submit for selects
+            input.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        }
+    });
+});
+
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+</script>
 {% endblock %}
