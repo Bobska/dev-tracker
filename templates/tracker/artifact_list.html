@@ -152,6 +152,9 @@
                                                 <a href="{% url 'tracker:artifact_update' artifact.pk %}" class="btn btn-outline-primary" title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
+                                                <a href="{% url 'tracker:artifact_delete' artifact.pk %}" class="btn btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>

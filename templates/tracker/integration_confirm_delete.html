@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Integration - FamilyHub Dev Tracker{% endblock %}
+
+{% block nav_integrations %}active{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'tracker:integration_list' %}">Integrations</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'tracker:integration_detail' object.pk %}">{{ object.from_app.name }} → {{ object.to_app.name }}</a></li>
+        <li class="breadcrumb-item active">Delete</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirm Delete Integration
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-warning me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    
+                    <p class="mb-3">Are you sure you want to delete the following integration?</p>
+                    
+                    <div class="border rounded p-3 mb-4 bg-light">
+                        <h5 class="mb-2">
+                            {{ object.from_app.name }} 
+                            <i class="bi bi-arrow-right mx-2"></i> 
+                            {{ object.to_app.name }}
+                        </h5>
+                        <p class="text-muted mb-2">{{ object.description|truncatewords:20 }}</p>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Type:</strong> 
+                                    <span class="badge bg-info">{{ object.get_integration_type_display }}</span>
+                                </small>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Status:</strong> 
+                                    <span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}primary{% elif object.status == 'testing' %}warning{% else %}secondary{% endif %}">
+                                        {{ object.get_status_display }}
+                                    </span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Complexity:</strong> 
+                                    <span class="badge bg-{% if object.complexity == 'high' %}danger{% elif object.complexity == 'medium' %}warning{% else %}success{% endif %}">
+                                        {{ object.get_complexity_display }}
+                                    </span>
+                                </small>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Estimated:</strong> {{ object.estimated_weeks }} week{{ object.estimated_weeks|pluralize }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        This integration plan may be referenced by other development activities.
+                    </div>
+                    
+                    <form method="post" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>
+                            Yes, Delete Integration
+                        </button>
+                        <a href="{% url 'tracker:integration_detail' object.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

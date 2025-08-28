@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ integration.name }} - FamilyHub Development Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'tracker:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'tracker:integration_list' %}">Integrations</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ integration.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Integration Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2>{{ integration.name }}</h2>
+            <p class="text-muted mb-0">
+                <i class="bi bi-diagram-3"></i> Integration between applications
+            </p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'tracker:integration_update' integration.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'tracker:integration_update' integration.pk %}">
+                        <i class="bi bi-pencil"></i> Edit Integration
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'tracker:integration_delete' integration.pk %}">
+                        <i class="bi bi-trash"></i> Delete Integration
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Integration Details Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Integration Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            {% if integration.status == 'completed' %}
+                                <span class="badge bg-success">{{ integration.get_status_display }}</span>
+                            {% elif integration.status == 'in_progress' %}
+                                <span class="badge bg-primary">{{ integration.get_status_display }}</span>
+                            {% elif integration.status == 'planning' %}
+                                <span class="badge bg-warning">{{ integration.get_status_display }}</span>
+                            {% elif integration.status == 'on_hold' %}
+                                <span class="badge bg-secondary">{{ integration.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">{{ integration.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Integration Type:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-info">{{ integration.get_integration_type_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Complexity:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            {% if integration.complexity == 'low' %}
+                                <span class="badge bg-success">{{ integration.get_complexity_display }}</span>
+                            {% elif integration.complexity == 'medium' %}
+                                <span class="badge bg-warning">{{ integration.get_complexity_display }}</span>
+                            {% elif integration.complexity == 'high' %}
+                                <span class="badge bg-danger">{{ integration.get_complexity_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ integration.get_complexity_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Priority:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            {% if integration.priority == 'critical' %}
+                                <span class="badge bg-danger">{{ integration.get_priority_display }}</span>
+                            {% elif integration.priority == 'high' %}
+                                <span class="badge bg-warning">{{ integration.get_priority_display }}</span>
+                            {% elif integration.priority == 'medium' %}
+                                <span class="badge bg-primary">{{ integration.get_priority_display }}</span>
+                            {% elif integration.priority == 'low' %}
+                                <span class="badge bg-secondary">{{ integration.get_priority_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if integration.estimated_hours %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Estimated Hours:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            {{ integration.estimated_hours }} hours
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if integration.actual_hours %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Actual Hours:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            {{ integration.actual_hours }} hours
+                            {% if integration.estimated_hours %}
+                                {% if integration.actual_hours > integration.estimated_hours %}
+                                    <span class="text-warning">(over estimate)</span>
+                                {% elif integration.actual_hours < integration.estimated_hours %}
+                                    <span class="text-success">(under estimate)</span>
+                                {% else %}
+                                    <span class="text-info">(on estimate)</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if integration.target_date %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Target Date:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            {{ integration.target_date|date:"F d, Y" }}
+                            {% if integration.target_date < today %}
+                                <span class="text-danger">(Overdue)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if integration.description %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Description:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="mb-0">{{ integration.description|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if integration.technical_notes %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Technical Notes:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="mb-0">{{ integration.technical_notes|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Applications Involved -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Applications Involved</h5>
+                </div>
+                <div class="card-body">
+                    {% if integration.applications.all %}
+                        <div class="row">
+                            {% for app in integration.applications.all %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title">
+                                            <a href="{% url 'tracker:application_detail' app.pk %}" class="text-decoration-none">
+                                                {{ app.name }}
+                                            </a>
+                                        </h6>
+                                        <p class="card-text small text-muted mb-1">{{ app.description|truncatewords:15 }}</p>
+                                        <span class="badge bg-{{ app.status|yesno:'success,warning,secondary' }}">
+                                            {{ app.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No applications assigned to this integration yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Related Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Related Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Project:</small><br>
+                        <a href="{% url 'tracker:project_detail' integration.project.pk %}" class="text-decoration-none">
+                            {{ integration.project.name }}
+                        </a>
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted">Applications Count:</small><br>
+                        {{ integration.applications.count }} application{{ integration.applications.count|pluralize }}
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted">Created:</small><br>
+                        {{ integration.created_at|date:"M d, Y g:i A" }}
+                    </div>
+
+                    {% if integration.updated_at != integration.created_at %}
+                    <div class="mb-3">
+                        <small class="text-muted">Last Updated:</small><br>
+                        {{ integration.updated_at|date:"M d, Y g:i A" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Progress Overview -->
+            {% if integration.estimated_hours or integration.actual_hours %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Progress Overview</h6>
+                </div>
+                <div class="card-body">
+                    {% if integration.estimated_hours and integration.actual_hours %}
+                        <div class="mb-2">
+                            <small class="text-muted">Time Progress:</small>
+                        </div>
+                        <small class="text-muted">
+                            {{ integration.actual_hours }} / {{ integration.estimated_hours }} hours
+                        </small>
+                    {% elif integration.estimated_hours %}
+                        <p class="text-muted">Estimated: {{ integration.estimated_hours }} hours</p>
+                    {% elif integration.actual_hours %}
+                        <p class="text-muted">Actual: {{ integration.actual_hours }} hours</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'tracker:integration_update' integration.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit Integration
+                        </a>
+                        <a href="{% url 'tracker:integration_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Back to Integrations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

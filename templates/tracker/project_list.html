@@ -128,6 +128,10 @@
                                         <li><a class="dropdown-item" href="{% url 'tracker:application_create' %}?project={{ project.pk }}">
                                             <i class="bi bi-plus me-2"></i>Add Application
                                         </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="{% url 'tracker:project_delete' project.pk %}">
+                                            <i class="bi bi-trash me-2"></i>Delete Project
+                                        </a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -308,6 +312,9 @@
                                         </a>
                                         <a href="{% url 'tracker:project_update' project.pk %}" class="btn btn-outline-secondary btn-sm">
                                             <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'tracker:project_delete' project.pk %}" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
                                         </a>
                                     </div>
                                 </td>

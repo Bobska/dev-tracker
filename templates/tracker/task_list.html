@@ -197,6 +197,9 @@
                                                     <a href="{% url 'tracker:task_detail' task.pk %}" class="btn btn-outline-info">
                                                         <i class="bi bi-eye"></i>
                                                     </a>
+                                                    <a href="{% url 'tracker:task_delete' task.pk %}" class="btn btn-outline-danger">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
                                                 </div>
                                             </td>
                                         </tr>

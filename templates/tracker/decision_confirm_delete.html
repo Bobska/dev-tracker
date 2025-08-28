@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Decision - FamilyHub Dev Tracker{% endblock %}
+
+{% block nav_decisions %}active{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'tracker:decision_list' %}">Decisions</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'tracker:decision_detail' object.pk %}">{{ object.title }}</a></li>
+        <li class="breadcrumb-item active">Delete</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirm Delete Decision
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-warning me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    
+                    <p class="mb-3">Are you sure you want to delete the following decision?</p>
+                    
+                    <div class="border rounded p-3 mb-4 bg-light">
+                        <h5 class="mb-2">{{ object.title }}</h5>
+                        <p class="text-muted mb-2">{{ object.context|truncatewords:20 }}</p>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Status:</strong> 
+                                    <span class="badge bg-{% if object.status == 'approved' %}success{% elif object.status == 'proposed' %}warning{% else %}secondary{% endif %}">
+                                        {{ object.get_status_display }}
+                                    </span>
+                                </small>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Impact:</strong> 
+                                    <span class="badge bg-{% if object.impact == 'high' %}danger{% elif object.impact == 'medium' %}warning{% else %}info{% endif %}">
+                                        {{ object.get_impact_display }}
+                                    </span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Project:</strong> {{ object.project.name }}
+                                </small>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">
+                                    <strong>Created:</strong> {{ object.created_at|date:"M d, Y" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        This decision record contains important architectural information that may be referenced by team members.
+                    </div>
+                    
+                    <form method="post" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>
+                            Yes, Delete Decision
+                        </button>
+                        <a href="{% url 'tracker:decision_detail' object.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

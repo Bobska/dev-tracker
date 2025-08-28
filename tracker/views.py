@@ -175,12 +175,16 @@ class ProjectListView(LoginRequiredMixin, ListView):
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('search', '')
         context['status_filter'] = self.request.GET.get('status', '')
         context['owner_filter'] = self.request.GET.get('owner', '')
         context['status_choices'] = Project.STATUS_CHOICES
-        context['owners'] = Project.objects.values('owner__username', 'owner__id').distinct()
+        # Get unique owners (User objects) who have projects
+        owner_ids = Project.objects.values_list('owner_id', flat=True).distinct()
+        context['owners'] = User.objects.filter(id__in=owner_ids)
         return context
 
 
@@ -923,3 +927,73 @@ def api_stats(request):
         return JsonResponse(stats)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# =============================================================================
+# DELETE VIEWS
+# =============================================================================
+
+class ProjectDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete a project with confirmation."""
+    model = Project
+    template_name = 'tracker/project_confirm_delete.html'
+    success_url = reverse_lazy('tracker:project_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Project deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+class ApplicationDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete an application with confirmation."""
+    model = Application
+    template_name = 'tracker/application_confirm_delete.html'
+    success_url = reverse_lazy('tracker:application_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Application deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete a task with confirmation."""
+    model = Task
+    template_name = 'tracker/task_confirm_delete.html'
+    success_url = reverse_lazy('tracker:task_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Task deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+class ArtifactDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete an artifact with confirmation."""
+    model = Artifact
+    template_name = 'tracker/artifact_confirm_delete.html'
+    success_url = reverse_lazy('tracker:artifact_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Artifact deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+class DecisionDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete a decision with confirmation."""
+    model = Decision
+    template_name = 'tracker/decision_confirm_delete.html'
+    success_url = reverse_lazy('tracker:decision_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Decision deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+class IntegrationDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete an integration with confirmation."""
+    model = Integration
+    template_name = 'tracker/integration_confirm_delete.html'
+    success_url = reverse_lazy('tracker:integration_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Integration deleted successfully.')
+        return super().delete(request, *args, **kwargs)
