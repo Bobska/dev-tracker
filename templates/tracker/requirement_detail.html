@@ -19,37 +19,54 @@
 
 .artifact-container h1 {
     color: #2c3e50;
-    font-size: 2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 0.5rem;
-}
-
-.artifact-container h2 {
-    color: #34495e;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #bdc3c7;
-    padding-bottom: 0.3rem;
-}
-
-.artifact-container h3 {
-    color: #34495e;
-    font-size: 1.25rem;
+    font-size: 1.75rem;
     font-weight: 600;
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
+    border: none;
+    padding: 0;
 }
 
-.artifact-container h4 {
-    color: #34495e;
-    font-size: 1.1rem;
+.artifact-container h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    padding: 0;
+}
+
+.artifact-container h3 {
+    color: #2c3e50;
+    font-size: 1.25rem;
     font-weight: 600;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
+}
+
+.artifact-container h4 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.artifact-container h5 {
+    color: #2c3e50;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.artifact-container h6 {
+    color: #2c3e50;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .artifact-container p {
@@ -60,11 +77,21 @@
 .artifact-container ul, .artifact-container ol {
     margin-bottom: 1rem;
     padding-left: 1.5rem;
+    margin-top: 0.5rem;
 }
 
 .artifact-container li {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     color: #2c3e50;
+    line-height: 1.5;
+}
+
+.artifact-container ul li {
+    list-style-type: disc;
+}
+
+.artifact-container ol li {
+    list-style-type: decimal;
 }
 
 .artifact-container blockquote {
@@ -321,17 +348,31 @@ document.addEventListener('DOMContentLoaded', function() {
         // Convert `code` to code tags
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
         
-        // Convert ### headers
+        // Convert headers (order matters - longest first)
+        html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
         html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
         html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
         html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
         
-        // Convert bullet points
-        html = html.replace(/^\- (.*$)/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+        // Convert bullet points - handle properly with word boundaries
+        html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+        
+        // Wrap consecutive list items in ul tags
+        html = html.replace(/(<li>.*<\/li>(?:\s*<li>.*<\/li>)*)/gs, function(match) {
+            return '<ul>' + match + '</ul>';
+        });
         
         // Convert numbered lists
         html = html.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+        
+        // Wrap consecutive numbered list items in ol tags
+        html = html.replace(/(<li>.*<\/li>(?:\s*<li>.*<\/li>)*)/gs, function(match, p1) {
+            // Only convert to ol if it's not already in a ul
+            if (!match.includes('<ul>')) {
+                return '<ol>' + match + '</ol>';
+            }
+            return match;
+        });
         
         // Convert code blocks
         html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
