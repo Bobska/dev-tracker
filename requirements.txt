@@ -1,6 +1,32 @@
-Django==5.2.5
-python-decouple==3.8
-django-crispy-forms==2.0
-crispy-bootstrap5==0.7
-django-widget-tweaks==1.5.0
-Pillow==10.0.0
+# Core Django Framework
+Django>=5.2.5,<6.0
+python-decouple>=3.8
+
+# Database
+psycopg2-binary>=2.9.5  # PostgreSQL adapter (optional)
+
+# Forms and UI
+django-crispy-forms>=2.0
+crispy-bootstrap5>=0.7
+django-widget-tweaks>=1.4.12
+
+# File Handling
+Pillow>=10.0.0
+
+# Development and Debugging (optional)
+django-debug-toolbar>=4.2.0
+
+# Data Export (optional - for management commands)
+openpyxl>=3.1.0
+pandas>=2.0.0
+
+# Production (optional)
+gunicorn>=21.0.0
+whitenoise>=6.5.0
+
+# Testing (optional)
+coverage>=7.0.0
+factory-boy>=3.3.0
+
+# Time Zone Handling
+pytz>=2023.3

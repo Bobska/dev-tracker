@@ -443,7 +443,9 @@
         // Load Footer Statistics
         function loadFooterStats() {
             // This would typically be an AJAX call to get real-time stats
-            fetch('{% url "tracker:api_stats" %}')
+            // Temporarily disabled for initial setup
+            /*
+            fetch('{% url "api:stats" %}')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('footerProjectCount').textContent = data.projects || 0;
@@ -454,6 +456,12 @@
                 .catch(error => {
                     console.log('Could not load footer stats:', error);
                 });
+            */
+            // Hardcoded values for initial setup
+            document.getElementById('footerProjectCount').textContent = '1';
+            document.getElementById('footerAppCount').textContent = '7';
+            document.getElementById('footerTaskCount').textContent = '25';
+            document.getElementById('footerCompletionRate').textContent = '65%';
         }
 
         // Loading State Helper
