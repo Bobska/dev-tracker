@@ -19,69 +19,77 @@
 
 .artifact-container h1 {
     color: #2c3e50;
-    font-size: 1.75rem;
-    font-weight: 600;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
     border: none;
     padding: 0;
+    line-height: 2rem;
 }
 
 .artifact-container h2 {
     color: #2c3e50;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
     border: none;
     padding: 0;
+    line-height: 1.75rem;
 }
 
 .artifact-container h3 {
     color: #2c3e50;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 600;
-    margin-top: 0.5rem;
-    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+    line-height: 1.5rem;
 }
 
 .artifact-container h4 {
     color: #2c3e50;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    margin-top: 0.5rem;
-    margin-bottom: 0.125rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+    line-height: 1.25rem;
 }
 
 .artifact-container h5 {
     color: #2c3e50;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     margin-top: 0.25rem;
-    margin-bottom: 0.125rem;
+    margin-bottom: 0;
+    line-height: 1.25rem;
 }
 
 .artifact-container h6 {
     color: #2c3e50;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
     margin-top: 0.25rem;
-    margin-bottom: 0.125rem;
+    margin-bottom: 0;
+    line-height: 1rem;
 }
 
 .artifact-container p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0;
     color: #2c3e50;
 }
 
 .artifact-container ul, .artifact-container ol {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0;
     padding-left: 1.5rem;
-    margin-top: 0.25rem;
 }
 
 .artifact-container li {
-    margin-bottom: 0.125rem;
+    margin-bottom: 0;
+    margin-top: 0;
     color: #2c3e50;
     line-height: 1.5;
 }
@@ -97,11 +105,11 @@
 .artifact-container blockquote {
     border-left: 4px solid #3498db;
     padding-left: 1rem;
-    margin: 0.5rem 0;
+    margin: 0.25rem 0;
     font-style: italic;
     color: #7f8c8d;
     background: #ecf0f1;
-    padding: 0.75rem;
+    padding: 0.5rem;
     border-radius: 0.25rem;
 }
 
@@ -120,7 +128,7 @@
     padding: 0.75rem;
     border-radius: 0.5rem;
     overflow-x: auto;
-    margin: 0.5rem 0;
+    margin: 0.25rem 0;
     border: 1px solid #34495e;
 }
 
@@ -168,8 +176,8 @@
 
 .artifact-container hr {
     border: none;
-    border-top: 2px solid #bdc3c7;
-    margin: 1rem 0;
+    border-top: 1px solid #bdc3c7;
+    margin: 0.25rem 0;
 }
 
 .artifact-container .highlight {
@@ -261,8 +269,8 @@
                     </h5>
                 </div>
                 <div class="card-body p-0">
-                    <div class="artifact-container">
-                        {{ requirement.content|linebreaks }}
+                    <div class="artifact-container" id="requirement-content">
+                        {{ requirement.content }}
                     </div>
                 </div>
             </div>
@@ -335,18 +343,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Enhanced Markdown-like formatting for Claude Artifact style
-    const content = document.querySelector('.artifact-container');
+    const content = document.getElementById('requirement-content');
     if (content) {
-        let html = content.innerHTML;
-        
-        // Convert **bold** to strong tags
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Convert *italic* to em tags
-        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // Convert `code` to code tags
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        let html = content.textContent || content.innerText; // Get raw text content
         
         // Convert headers (order matters - longest first)
         html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
@@ -354,7 +353,19 @@ document.addEventListener('DOMContentLoaded', function() {
         html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
         html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
         
-        // Convert bullet points - handle properly with word boundaries
+        // Convert code blocks
+        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+        
+        // Convert inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Convert **bold** to strong tags
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Convert *italic* to em tags
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Convert bullet points
         html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
         
         // Wrap consecutive list items in ul tags
@@ -374,18 +385,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return match;
         });
         
-        // Convert code blocks
-        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
-        
         // Convert horizontal rules
         html = html.replace(/^---$/gm, '<hr>');
         
         // Convert > blockquotes
         html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
         
+        // Convert line breaks to <br> tags for remaining content
+        html = html.replace(/\n/g, '<br>');
+        
+        // Set the processed HTML
         content.innerHTML = html;
         
-        // Initialize syntax highlighting
+        // Initialize syntax highlighting if Prism is available
         if (typeof Prism !== 'undefined') {
             Prism.highlightAllUnder(content);
         }

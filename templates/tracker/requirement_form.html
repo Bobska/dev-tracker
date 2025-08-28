@@ -276,13 +276,13 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = markdown;
         
         // Convert headers (order matters - longest first)
-        html = html.replace(/^#### (.*$)/gm, '<h4 style="color: #2c3e50; font-size: 1.1rem; font-weight: 600; margin-top: 0.5rem; margin-bottom: 0.125rem;">$1</h4>');
-        html = html.replace(/^### (.*$)/gm, '<h3 style="color: #2c3e50; font-size: 1.25rem; font-weight: 600; margin-top: 0.5rem; margin-bottom: 0.25rem;">$1</h3>');
-        html = html.replace(/^## (.*$)/gm, '<h2 style="color: #2c3e50; font-size: 1.5rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem;">$1</h2>');
-        html = html.replace(/^# (.*$)/gm, '<h1 style="color: #2c3e50; font-size: 1.75rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem;">$1</h1>');
+        html = html.replace(/^#### (.*$)/gm, '<h4 style="color: #2c3e50; font-size: 1rem; font-weight: 600; margin-top: 0.25rem; margin-bottom: 0; line-height: 1.25rem;">$1</h4>');
+        html = html.replace(/^### (.*$)/gm, '<h3 style="color: #2c3e50; font-size: 1.125rem; font-weight: 600; margin-top: 0.25rem; margin-bottom: 0; line-height: 1.5rem;">$1</h3>');
+        html = html.replace(/^## (.*$)/gm, '<h2 style="color: #2c3e50; font-size: 1.25rem; font-weight: 600; margin-top: 0.25rem; margin-bottom: 0; line-height: 1.75rem;">$1</h2>');
+        html = html.replace(/^# (.*$)/gm, '<h1 style="color: #2c3e50; font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem; margin-bottom: 0; line-height: 2rem;">$1</h1>');
         
         // Convert code blocks
-        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre style="background: #2c3e50; color: #ecf0f1; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0;"><code>$2</code></pre>');
+        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre style="background: #2c3e50; color: #ecf0f1; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.25rem 0;"><code>$2</code></pre>');
         
         // Convert inline code
         html = html.replace(/`([^`]+)`/g, '<code style="background: #f1c40f; color: #2c3e50; padding: 0.2rem 0.4rem; border-radius: 0.25rem;">$1</code>');
@@ -292,17 +292,17 @@ document.addEventListener('DOMContentLoaded', function() {
         html = html.replace(/\*(.*?)\*/g, '<em style="color: #7f8c8d; font-style: italic;">$1</em>');
         
         // Convert horizontal rules
-        html = html.replace(/^---$/gm, '<hr style="border: none; border-top: 2px solid #bdc3c7; margin: 1rem 0;">');
+        html = html.replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid #bdc3c7; margin: 0.25rem 0;">');
         
         // Convert blockquotes
-        html = html.replace(/^> (.*$)/gm, '<blockquote style="border-left: 4px solid #3498db; padding-left: 1rem; margin: 0.5rem 0; font-style: italic; color: #7f8c8d; background: #ecf0f1; padding: 0.75rem; border-radius: 0.25rem;">$1</blockquote>');
+        html = html.replace(/^> (.*$)/gm, '<blockquote style="border-left: 4px solid #3498db; padding-left: 1rem; margin: 0.25rem 0; font-style: italic; color: #7f8c8d; background: #ecf0f1; padding: 0.5rem; border-radius: 0.25rem;">$1</blockquote>');
         
         // Convert bullet points
-        html = html.replace(/^- (.*$)/gm, '<li style="margin-bottom: 0.125rem;">$1</li>');
+        html = html.replace(/^- (.*$)/gm, '<li style="margin-bottom: 0; margin-top: 0;">$1</li>');
         
         // Wrap consecutive list items in ul tags
         html = html.replace(/(<li[^>]*>.*<\/li>(?:\s*<li[^>]*>.*<\/li>)*)/gs, function(match) {
-            return '<ul style="margin-bottom: 0.5rem; padding-left: 1.5rem; margin-top: 0.25rem;">' + match + '</ul>';
+            return '<ul style="margin-bottom: 0.25rem; margin-top: 0; padding-left: 1.5rem;">' + match + '</ul>';
         });
         
         // Convert line breaks
