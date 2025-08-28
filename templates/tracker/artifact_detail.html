@@ -18,10 +18,18 @@
             </div>
             <p class="lead text-muted">{{ artifact.description }}</p>
             <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-light text-dark">{{ artifact.application.name }}</span>
-                <span class="badge bg-{% if artifact.content_type == 'documentation' %}info{% elif artifact.content_type == 'code' %}primary{% elif artifact.content_type == 'design' %}warning{% else %}secondary{% endif %}">
-                    {{ artifact.get_content_type_display }}
-                </span>
+                {% if artifact.application %}
+                    <span class="badge bg-light text-dark">{{ artifact.application.name }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-file-text me-1"></i>Standalone
+                    </span>
+                {% endif %}
+                {% if artifact.type %}
+                    <span class="badge bg-{% if artifact.type == 'documentation' %}info{% elif artifact.type == 'code' %}primary{% elif artifact.type == 'design' %}warning{% else %}secondary{% endif %}">
+                        {{ artifact.get_type_display }}
+                    </span>
+                {% endif %}
                 {% if artifact.version %}
                     <span class="badge bg-success">v{{ artifact.version }}</span>
                 {% endif %}
@@ -121,24 +129,35 @@
                     <dl class="row">
                         <dt class="col-sm-3">Application:</dt>
                         <dd class="col-sm-9">
-                            <a href="{% url 'tracker:application_detail' artifact.application.pk %}">{{ artifact.application.name }}</a>
+                            {% if artifact.application %}
+                                <a href="{% url 'tracker:application_detail' artifact.application.pk %}">{{ artifact.application.name }}</a>
+                            {% else %}
+                                <span class="text-muted">
+                                    <i class="bi bi-file-text me-1"></i>Standalone Artifact
+                                </span>
+                            {% endif %}
                         </dd>
                         
+                        {% if artifact.application %}
                         <dt class="col-sm-3">Project:</dt>
                         <dd class="col-sm-9">
                             <a href="{% url 'tracker:project_detail' artifact.application.project.pk %}">{{ artifact.application.project.name }}</a>
                         </dd>
+                        {% endif %}
                         
+                        {% if artifact.type %}
                         <dt class="col-sm-3">Content Type:</dt>
                         <dd class="col-sm-9">
-                            <span class="badge bg-{% if artifact.content_type == 'documentation' %}info{% elif artifact.content_type == 'code' %}primary{% elif artifact.content_type == 'design' %}warning{% else %}secondary{% endif %}">
-                                {{ artifact.get_content_type_display }}
+                            <span class="badge bg-{% if artifact.type == 'documentation' %}info{% elif artifact.type == 'code' %}primary{% elif artifact.type == 'design' %}warning{% else %}secondary{% endif %}">
+                                {{ artifact.get_type_display }}
                             </span>
                         </dd>
+                        {% endif %}
                         
+                        {% if artifact.status %}
                         <dt class="col-sm-3">Status:</dt>
                         <dd class="col-sm-9">
-                            <span class="badge bg-{% if artifact.status == 'final' %}success{% elif artifact.status == 'draft' %}warning{% else %}secondary{% endif %}">
+                            <span class="badge bg-{% if artifact.status == 'complete' %}success{% elif artifact.status == 'draft' %}warning{% else %}secondary{% endif %}">
                                 {{ artifact.get_status_display }}
                             </span>
                         </dd>

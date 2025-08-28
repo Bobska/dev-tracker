@@ -108,7 +108,17 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ artifact.application.name }}</td>
+                                        <td>
+                                            {% if artifact.application %}
+                                                <a href="{% url 'tracker:application_detail' artifact.application.pk %}" class="text-decoration-none">
+                                                    {{ artifact.application.name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">
+                                                    <i class="bi bi-file-text me-1"></i>Standalone
+                                                </span>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             <span class="badge bg-{% if artifact.content_type == 'documentation' %}info{% elif artifact.content_type == 'code' %}primary{% elif artifact.content_type == 'design' %}warning{% else %}secondary{% endif %}">
                                                 {{ artifact.get_content_type_display }}

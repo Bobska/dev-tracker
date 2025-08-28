@@ -194,30 +194,31 @@ class Artifact(models.Model):
         ('complete', 'Complete'),
     ]
 
-    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='artifacts')
+    application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='artifacts', null=True, blank=True)
     name = models.CharField(max_length=200)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=True)
     description = models.TextField(blank=True)
     file_upload = models.FileField(
         upload_to=artifact_upload_path,
         blank=True,
         validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'md', 'py', 'js', 'html', 'css'])]
     )
-    content = models.TextField(blank=True, help_text="Text content for the artifact")
-    version = models.CharField(max_length=10, default='1.0')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_artifacts')
+    content = models.TextField(help_text="Text content for the artifact")
+    version = models.CharField(max_length=10, default='1.0', blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_artifacts', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-updated_at']
-        unique_together = ['application', 'name', 'version']
         verbose_name = "Artifact"
         verbose_name_plural = "Artifacts"
 
     def __str__(self):
-        return f"{self.application.name} - {self.name} (v{self.version})"
+        if self.application:
+            return f"{self.application.name} - {self.name} (v{self.version})"
+        return f"{self.name} (v{self.version})"
 
     def get_absolute_url(self):
         return reverse('tracker:artifact_detail', kwargs={'pk': self.pk})

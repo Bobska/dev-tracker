@@ -170,27 +170,33 @@ class ArtifactForm(forms.ModelForm):
     class Meta:
         model = Artifact
         fields = [
-            'application', 'name', 'type', 'status', 
-            'file_upload', 'content', 'description'
+            'name', 'content', 'application', 'type', 'status', 
+            'file_upload', 'description'
         ]
         widgets = {
-            'application': forms.Select(attrs={'class': 'form-select'}),
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Artifact name (required)'
+            }),
+            'content': forms.Textarea(attrs={
+                'rows': 8, 
+                'class': 'form-control',
+                'placeholder': 'Enter artifact content here... (required)'
+            }),
+            'application': forms.Select(attrs={
+                'class': 'form-select',
+                'data-placeholder': 'Select application (optional)'
+            }),
             'type': forms.Select(attrs={'class': 'form-select'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
             'file_upload': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': '.pdf,.doc,.docx,.txt,.py,.js,.html,.css,.md'
             }),
-            'content': forms.Textarea(attrs={
-                'rows': 8, 
-                'class': 'form-control',
-                'placeholder': 'Enter artifact content here...'
-            }),
             'description': forms.Textarea(attrs={
                 'rows': 3, 
                 'class': 'form-control',
-                'placeholder': 'Additional description about this artifact...'
+                'placeholder': 'Additional description about this artifact... (optional)'
             }),
         }
 
@@ -199,24 +205,28 @@ class ArtifactForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.attrs = {'enctype': 'multipart/form-data'}
+        
+        # Make application field optional
+        self.fields['application'].required = False
+        
         self.helper.layout = Layout(
             Fieldset(
                 'Artifact Information',
+                HTML('<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i><strong>Required:</strong> Name and Content</div>'),
+                'name',
+                'content',
+                HTML('<hr class="my-3">'),
+                HTML('<h6 class="text-muted">Optional Fields</h6>'),
                 Row(
                     Column('application', css_class='col-md-6'),
-                    Column('name', css_class='col-md-6'),
+                    Column('type', css_class='col-md-6'),
                 ),
                 Row(
-                    Column('type', css_class='col-md-6'),
                     Column('status', css_class='col-md-6'),
+                    Column(Field('increment_version', css_class='form-check-input'), css_class='col-md-6'),
                 ),
                 'file_upload',
                 HTML('<small class="text-muted">Supported formats: PDF, DOC, DOCX, TXT, PY, JS, HTML, CSS, MD (Max 10MB)</small>'),
-                Field('increment_version', css_class='form-check-input'),
-            ),
-            Fieldset(
-                'Content',
-                'content',
                 'description',
             ),
             FormActions(
